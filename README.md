@@ -1,1 +1,1 @@
-# -terraform-provider-vmds
+# terraform-provider-vmds
