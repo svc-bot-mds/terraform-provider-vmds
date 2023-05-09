@@ -116,3 +116,77 @@ func (s *Service) DeleteMdsUser(id string) error {
 
 	return nil
 }
+
+// GetMdsServiceAccounts - Return list of Service Accounts
+func (s *Service) GetMdsServiceAccounts(query *MdsServiceAccountsQuery) (model.Paged[model.MdsServiceAccount], error) {
+	reqUrl := fmt.Sprintf("%s/%s", s.Endpoint, Users)
+	var response model.Paged[model.MdsServiceAccount]
+
+	if query.Size == 0 {
+		query.Size = defaultPage.Size
+	}
+
+	_, err := s.Api.Get(&reqUrl, query, &response)
+	if err != nil {
+		return response, err
+	}
+
+	return response, nil
+}
+
+// CreateMdsServiceAccount - Submits a request to create service account
+func (s *Service) CreateMdsServiceAccount(requestBody *MdsCreateSvcAccountRequest) error {
+	if requestBody == nil {
+		return fmt.Errorf("requestBody cannot be nil")
+	}
+	urlPath := fmt.Sprintf("%s/%s", s.Endpoint, Users)
+
+	_, err := s.Api.Post(&urlPath, requestBody, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateMdsServiceAccount - Submits a request to update service account
+func (s *Service) UpdateMdsServiceAccount(id string, requestBody *MdsSvcAccountUpdateRequest) error {
+	if id == "" {
+		return fmt.Errorf("service account ID cannot be empty")
+	}
+	if requestBody == nil {
+		return fmt.Errorf("requestBody cannot be nil")
+	}
+	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, Users, id)
+
+	_, err := s.Api.Patch(&urlPath, requestBody, nil)
+	return err
+}
+
+// GetMdsServiceAccount - Returns the service account by ID
+func (s *Service) GetMdsServiceAccount(id string) (*model.MdsServiceAccount, error) {
+	if strings.TrimSpace(id) == "" {
+		return nil, fmt.Errorf("ID cannot be empty")
+	}
+	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, Users, id)
+	var response model.MdsServiceAccount
+
+	_, err := s.Api.Get(&urlPath, nil, &response)
+	if err != nil {
+		return &response, err
+	}
+
+	return &response, err
+}
+
+// DeleteMdsServiceAccount - Submits a request to delete service account
+func (s *Service) DeleteMdsServiceAccount(id string) error {
+	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, Users, id)
+
+	_, err := s.Api.Delete(&urlPath, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
