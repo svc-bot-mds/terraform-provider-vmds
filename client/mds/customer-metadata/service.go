@@ -2,6 +2,7 @@ package customer_metadata
 
 import (
 	"fmt"
+	"github.com/svc-bot-mds/terraform-provider-vmds/client/constants/account_type"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds/core"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/model"
 	"strings"
@@ -46,8 +47,13 @@ func (s *Service) GetPolicies(query *MdsPoliciesQuery) (model.Paged[model.MdsPol
 
 // GetMdsUsers - Return list of Users
 func (s *Service) GetMdsUsers(query *MdsUsersQuery) (model.Paged[model.MdsUser], error) {
-	reqUrl := fmt.Sprintf("%s/%s", s.Endpoint, Users)
 	var response model.Paged[model.MdsUser]
+	if query == nil {
+		return response, fmt.Errorf("query cannot be nil")
+	}
+
+	query.AccountType = account_type.USER_ACCOUNT
+	reqUrl := fmt.Sprintf("%s/%s", s.Endpoint, Users)
 
 	if query.Size == 0 {
 		query.Size = defaultPage.Size
@@ -65,6 +71,7 @@ func (s *Service) CreateMdsUser(requestBody *MdsCreateUserRequest) error {
 	if requestBody == nil {
 		return fmt.Errorf("requestBody cannot be nil")
 	}
+	requestBody.AccountType = account_type.USER_ACCOUNT
 	urlPath := fmt.Sprintf("%s/%s", s.Endpoint, Users)
 
 	_, err := s.Api.Post(&urlPath, requestBody, nil)
@@ -107,6 +114,89 @@ func (s *Service) GetMdsUser(id string) (*model.MdsUser, error) {
 
 // DeleteMdsUser - Submits a request to delete user
 func (s *Service) DeleteMdsUser(id string) error {
+	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, Users, id)
+
+	_, err := s.Api.Delete(&urlPath, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetMdsServiceAccounts - Return list of Service Accounts
+func (s *Service) GetMdsServiceAccounts(query *MdsServiceAccountsQuery) (model.Paged[model.MdsServiceAccount], error) {
+
+	var response model.Paged[model.MdsServiceAccount]
+	if query == nil {
+		return response, fmt.Errorf("query cannot be nil")
+	}
+
+	query.AccountType = account_type.SERVICE_ACCOUNT
+	reqUrl := fmt.Sprintf("%s/%s", s.Endpoint, Users)
+
+	if query.Size == 0 {
+		query.Size = defaultPage.Size
+	}
+
+	_, err := s.Api.Get(&reqUrl, query, &response)
+	if err != nil {
+		return response, err
+	}
+
+	return response, nil
+}
+
+// CreateMdsServiceAccount - Submits a request to create service account
+func (s *Service) CreateMdsServiceAccount(requestBody *MdsCreateSvcAccountRequest) error {
+	if requestBody == nil {
+		return fmt.Errorf("requestBody cannot be nil")
+	}
+
+	requestBody.AccountType = account_type.SERVICE_ACCOUNT
+
+	urlPath := fmt.Sprintf("%s/%s", s.Endpoint, Users)
+
+	_, err := s.Api.Post(&urlPath, requestBody, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateMdsServiceAccount - Submits a request to update service account
+func (s *Service) UpdateMdsServiceAccount(id string, requestBody *MdsSvcAccountUpdateRequest) error {
+	if id == "" {
+		return fmt.Errorf("service account ID cannot be empty")
+	}
+	if requestBody == nil {
+		return fmt.Errorf("requestBody cannot be nil")
+	}
+	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, Users, id)
+
+	_, err := s.Api.Patch(&urlPath, requestBody, nil)
+	return err
+}
+
+// GetMdsServiceAccount - Returns the service account by ID
+func (s *Service) GetMdsServiceAccount(id string) (*model.MdsServiceAccount, error) {
+	if strings.TrimSpace(id) == "" {
+		return nil, fmt.Errorf("ID cannot be empty")
+	}
+	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, Users, id)
+	var response model.MdsServiceAccount
+
+	_, err := s.Api.Get(&urlPath, nil, &response)
+	if err != nil {
+		return &response, err
+	}
+
+	return &response, err
+}
+
+// DeleteMdsServiceAccount - Submits a request to delete service account
+func (s *Service) DeleteMdsServiceAccount(id string) error {
 	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, Users, id)
 
 	_, err := s.Api.Delete(&urlPath, nil, nil)

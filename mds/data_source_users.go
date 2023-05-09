@@ -6,7 +6,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/svc-bot-mds/terraform-provider-vmds/client/constants/account_type"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
 	customer_metadata "github.com/svc-bot-mds/terraform-provider-vmds/client/mds/customer-metadata"
 )
@@ -74,9 +73,7 @@ func (d *usersDatasource) Read(ctx context.Context, req datasource.ReadRequest, 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 
-	query := &customer_metadata.MdsUsersQuery{
-		AccountType: account_type.USER_ACCOUNT,
-	}
+	query := &customer_metadata.MdsUsersQuery{}
 
 	users, err := d.client.CustomerMetadata.GetMdsUsers(query)
 	if err != nil {
