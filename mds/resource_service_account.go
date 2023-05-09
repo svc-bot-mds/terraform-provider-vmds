@@ -9,11 +9,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/svc-bot-mds/terraform-provider-vmds/client/constants/account_type"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
 	customer_metadata "github.com/svc-bot-mds/terraform-provider-vmds/client/mds/customer-metadata"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/model"
@@ -40,13 +38,12 @@ type serviceAccountResource struct {
 }
 
 type serviceAccountResourceModel struct {
-	ID          types.String   `tfsdk:"id"`
-	Name        types.String   `tfsdk:"name"`
-	Status      types.String   `tfsdk:"status"`
-	PolicyIds   types.Set      `tfsdk:"policy_ids"`
-	Tags        types.Set      `tfsdk:"tags"`
-	AccountType types.String   `tfsdk:"account_type"`
-	Timeouts    timeouts.Value `tfsdk:"timeouts"`
+	ID        types.String   `tfsdk:"id"`
+	Name      types.String   `tfsdk:"name"`
+	Status    types.String   `tfsdk:"status"`
+	PolicyIds types.Set      `tfsdk:"policy_ids"`
+	Tags      types.Set      `tfsdk:"tags"`
+	Timeouts  timeouts.Value `tfsdk:"timeouts"`
 }
 
 func (r *serviceAccountResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -83,10 +80,6 @@ func (r *serviceAccountResource) Schema(ctx context.Context, _ resource.SchemaRe
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-			},
-			"account_type": schema.StringAttribute{
-				Computed: true,
-				Default:  stringdefault.StaticString(account_type.SERVICE_ACCOUNT),
 			},
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Updating the name results in deletion of existing service account and new service account with updated name is created.",
@@ -139,8 +132,7 @@ func (r *serviceAccountResource) Create(ctx context.Context, req resource.Create
 	defer cancel()
 	// Generate API request body from plan
 	svcAccountRequest := customer_metadata.MdsCreateSvcAccountRequest{
-		Usernames:   []string{plan.Name.ValueString()},
-		AccountType: account_type.SERVICE_ACCOUNT,
+		Usernames: []string{plan.Name.ValueString()},
 	}
 	plan.Tags.ElementsAs(ctx, &svcAccountRequest.Tags, true)
 	plan.PolicyIds.ElementsAs(ctx, &svcAccountRequest.PolicyIds, true)
@@ -154,8 +146,7 @@ func (r *serviceAccountResource) Create(ctx context.Context, req resource.Create
 	}
 
 	svcAccounts, err := r.client.CustomerMetadata.GetMdsServiceAccounts(&customer_metadata.MdsServiceAccountsQuery{
-		AccountType: account_type.SERVICE_ACCOUNT,
-		Name:        []string{plan.Name.ValueString()},
+		Names: []string{plan.Name.ValueString()},
 	})
 
 	if err != nil {
@@ -316,7 +307,6 @@ func saveFromSvcAccountResponse(ctx *context.Context, diagnostics *diag.Diagnost
 		return 1
 	}
 	state.Tags = tags
-	state.AccountType = types.StringValue(account_type.SERVICE_ACCOUNT)
 
 	return 0
 }

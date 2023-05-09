@@ -2,6 +2,7 @@ package customer_metadata
 
 import (
 	"fmt"
+	"github.com/svc-bot-mds/terraform-provider-vmds/client/constants/account_type"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds/core"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/model"
 	"strings"
@@ -46,8 +47,13 @@ func (s *Service) GetPolicies(query *MdsPoliciesQuery) (model.Paged[model.MdsPol
 
 // GetMdsUsers - Return list of Users
 func (s *Service) GetMdsUsers(query *MdsUsersQuery) (model.Paged[model.MdsUser], error) {
-	reqUrl := fmt.Sprintf("%s/%s", s.Endpoint, Users)
 	var response model.Paged[model.MdsUser]
+	if query == nil {
+		return response, fmt.Errorf("query cannot be nil")
+	}
+
+	query.AccountType = account_type.USER_ACCOUNT
+	reqUrl := fmt.Sprintf("%s/%s", s.Endpoint, Users)
 
 	if query.Size == 0 {
 		query.Size = defaultPage.Size
@@ -65,6 +71,7 @@ func (s *Service) CreateMdsUser(requestBody *MdsCreateUserRequest) error {
 	if requestBody == nil {
 		return fmt.Errorf("requestBody cannot be nil")
 	}
+	requestBody.AccountType = account_type.USER_ACCOUNT
 	urlPath := fmt.Sprintf("%s/%s", s.Endpoint, Users)
 
 	_, err := s.Api.Post(&urlPath, requestBody, nil)
@@ -119,8 +126,14 @@ func (s *Service) DeleteMdsUser(id string) error {
 
 // GetMdsServiceAccounts - Return list of Service Accounts
 func (s *Service) GetMdsServiceAccounts(query *MdsServiceAccountsQuery) (model.Paged[model.MdsServiceAccount], error) {
-	reqUrl := fmt.Sprintf("%s/%s", s.Endpoint, Users)
+
 	var response model.Paged[model.MdsServiceAccount]
+	if query == nil {
+		return response, fmt.Errorf("query cannot be nil")
+	}
+
+	query.AccountType = account_type.SERVICE_ACCOUNT
+	reqUrl := fmt.Sprintf("%s/%s", s.Endpoint, Users)
 
 	if query.Size == 0 {
 		query.Size = defaultPage.Size
@@ -139,6 +152,9 @@ func (s *Service) CreateMdsServiceAccount(requestBody *MdsCreateSvcAccountReques
 	if requestBody == nil {
 		return fmt.Errorf("requestBody cannot be nil")
 	}
+
+	requestBody.AccountType = account_type.SERVICE_ACCOUNT
+
 	urlPath := fmt.Sprintf("%s/%s", s.Endpoint, Users)
 
 	_, err := s.Api.Post(&urlPath, requestBody, nil)

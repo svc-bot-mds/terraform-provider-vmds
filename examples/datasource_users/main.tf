@@ -15,5 +15,5 @@ data "vmds_users" "users" {
 }
 
 output "users_data" {
-  value = data.mds_users.users
+  value = data.vmds_users.users
 }

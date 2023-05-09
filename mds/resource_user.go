@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/svc-bot-mds/terraform-provider-vmds/client/constants/account_type"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
 	customer_metadata "github.com/svc-bot-mds/terraform-provider-vmds/client/mds/customer-metadata"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/model"
@@ -45,7 +44,6 @@ type userResourceModel struct {
 	ID           types.String   `tfsdk:"id"`
 	Email        types.String   `tfsdk:"email"`
 	Status       types.String   `tfsdk:"status"`
-	AccountType  types.String   `tfsdk:"account_type"`
 	Username     types.String   `tfsdk:"username"`
 	PolicyIds    types.Set      `tfsdk:"policy_ids"`
 	RoleIds      []string       `tfsdk:"role_ids"`
@@ -94,10 +92,6 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-			},
-			"account_type": schema.StringAttribute{
-				Computed: true,
-				Default:  stringdefault.StaticString(account_type.USER_ACCOUNT),
 			},
 			"email": schema.StringAttribute{
 				Required: true,
@@ -191,7 +185,6 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	// Generate API request body from plan
 	userRequest := customer_metadata.MdsCreateUserRequest{
-		AccountType:  plan.AccountType.ValueString(),
 		Usernames:    []string{plan.Email.ValueString()},
 		ServiceRoles: rolesReq,
 	}
@@ -206,8 +199,7 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	users, err := r.client.CustomerMetadata.GetMdsUsers(&customer_metadata.MdsUsersQuery{
-		AccountType: account_type.USER_ACCOUNT,
-		Emails:      []string{plan.Email.ValueString()},
+		Emails: []string{plan.Email.ValueString()},
 	})
 
 	if err != nil {
@@ -397,7 +389,6 @@ func saveFromUserResponse(ctx *context.Context, diagnostics *diag.Diagnostics, s
 		return 1
 	}
 	state.Tags = tags
-	state.AccountType = types.StringValue(account_type.USER_ACCOUNT)
 	state.Username = types.StringValue(user.Name)
 
 	return 0

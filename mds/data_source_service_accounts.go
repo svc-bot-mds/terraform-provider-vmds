@@ -6,7 +6,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/svc-bot-mds/terraform-provider-vmds/client/constants/account_type"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
 	customer_metadata "github.com/svc-bot-mds/terraform-provider-vmds/client/mds/customer-metadata"
 )
@@ -57,7 +56,6 @@ func (d *serviceAccountsDatasource) Schema(_ context.Context, _ datasource.Schem
 						},
 						"name": schema.StringAttribute{
 							Computed: true,
-							Optional: true,
 						},
 						"status": schema.StringAttribute{
 							Computed: true,
@@ -75,9 +73,7 @@ func (d *serviceAccountsDatasource) Read(ctx context.Context, req datasource.Rea
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 
-	query := &customer_metadata.MdsServiceAccountsQuery{
-		AccountType: account_type.SERVICE_ACCOUNT,
-	}
+	query := &customer_metadata.MdsServiceAccountsQuery{}
 
 	serviceAccounts, err := d.client.CustomerMetadata.GetMdsServiceAccounts(query)
 	if err != nil {

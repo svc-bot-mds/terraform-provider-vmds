@@ -1,19 +1,19 @@
 terraform {
   required_providers {
-    mds = {
-      source = "hashicorp.com/edu/mds"
+    vmds = {
+      source = "hashicorp.com/edu/vmds"
     }
   }
 }
 
-provider "mds" {
+provider "vmds" {
   host      = "MDS_HOST_URL"
   api_token = "API_TOKEN"
 }
 
-data "mds_service_accounts" "service_accounts" {
+data "vmds_service_accounts" "service_accounts" {
 }
 
 output "service_accounts_data" {
-  value = data.mds_service_accounts.service_accounts
+  value = data.vmds_service_accounts.service_accounts
 }
