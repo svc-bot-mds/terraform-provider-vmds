@@ -55,3 +55,16 @@ func (s *Service) GetMdsRoles(query *MDSRolesQuery) (model.MdsRoles, error) {
 	}
 	return response, nil
 }
+
+// GetPolicyTypes - Returns the policy types
+func (s *Service) GetPolicyTypes() ([]string, error) {
+	urlPath := fmt.Sprintf("%s/%s/%s/%s", s.Endpoint, MdsServices, Policies, Types)
+	var response []string
+
+	_, err := s.Api.Get(&urlPath, nil, &response)
+	if err != nil {
+		return response, err
+	}
+
+	return response, err
+}

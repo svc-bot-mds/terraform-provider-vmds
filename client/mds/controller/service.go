@@ -158,3 +158,19 @@ func (s *Service) GetServiceInstanceTypes(serviceTypeQuery *MdsInstanceTypesQuer
 
 	return response, nil
 }
+
+// GetMdsClusterMetaData - Returns the cluster metadata by ID
+func (s *Service) GetMdsClusterMetaData(id string) (*model.MdsClusterMetadataById, error) {
+	if strings.TrimSpace(id) == "" {
+		return nil, fmt.Errorf("ID cannot be empty")
+	}
+	urlPath := fmt.Sprintf("%s/%s/%s/%s", s.Endpoint, Clusters, id, MetaData)
+	var response model.MdsClusterMetadataById
+
+	_, err := s.Api.Get(&urlPath, nil, &response)
+	if err != nil {
+		return &response, err
+	}
+
+	return &response, err
+}
