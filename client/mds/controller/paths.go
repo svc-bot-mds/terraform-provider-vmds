@@ -9,4 +9,5 @@ const (
 	Deployments   = "deployments"
 	Dashboard     = "dashboard"
 	NetworkPolicy = "networkpolicy"
+	MetaData      = "metadata"
 )
