@@ -1,6 +1,6 @@
 package model
 
-type MdsClusterMetadataById struct {
+type MdsClusterMetaData struct {
 	Id          string `json:"id"`
 	Name        string `json:"name"`
 	Provider    string `json:"provider"`

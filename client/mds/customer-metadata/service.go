@@ -206,19 +206,3 @@ func (s *Service) DeleteMdsServiceAccount(id string) error {
 
 	return nil
 }
-
-// GetAllPolicies - Returns list of Policies
-func (s *Service) GetAllPolicies(query *MdsAllPoliciesQuery) (model.Paged[model.MdsPolicy], error) {
-	reqUrl := fmt.Sprintf("%s/%s", s.Endpoint, Policies)
-	var response model.Paged[model.MdsPolicy]
-
-	if query.Size == 0 {
-		query.Size = defaultPage.Size
-	}
-
-	_, err := s.Api.Get(&reqUrl, query, &response)
-	if err != nil {
-		return response, err
-	}
-	return response, nil
-}

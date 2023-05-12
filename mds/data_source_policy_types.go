@@ -36,7 +36,7 @@ func (d *policyTypesDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"policy_types": schema.SetAttribute{
-				Optional:    true,
+				Computed:    true,
 				ElementType: types.StringType,
 			},
 		},

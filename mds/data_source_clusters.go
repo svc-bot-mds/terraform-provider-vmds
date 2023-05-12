@@ -60,7 +60,6 @@ func (d *clustersDatasource) Schema(_ context.Context, _ datasource.SchemaReques
 						},
 						"name": schema.StringAttribute{
 							Computed: true,
-							Optional: true,
 						},
 					},
 				},

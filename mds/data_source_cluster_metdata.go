@@ -31,7 +31,7 @@ type clusterMetdataDataSource struct {
 
 // Metadata returns the data source type name.
 func (d *clusterMetdataDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_cluster_metadata_by_id"
+	resp.TypeName = req.ProviderTypeName + "_cluster_metadata"
 }
 
 // Schema defines the schema for the data source.
@@ -72,7 +72,7 @@ func (d *clusterMetdataDataSource) Read(ctx context.Context, req datasource.Read
 		return
 	}
 
-	// Map networkPorts body to model
+	// Map cluster metadata body to model
 	metadataDetails := clusterMetdataDataSourceModel{
 		Id:           types.StringValue(clusterMetadata.Id),
 		Name:         types.StringValue(clusterMetadata.Name),
