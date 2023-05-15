@@ -52,7 +52,6 @@ func (d *clustersDatasource) Schema(_ context.Context, _ datasource.SchemaReques
 			},
 			"clusters": schema.ListNestedAttribute{
 				Computed: true,
-				Optional: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{

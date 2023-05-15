@@ -11,10 +11,11 @@ provider "vmds" {
   api_token = "API_TOKEN"
 }
 
-data "vmds_network_ports" "all" {
+data "vmds_cluster_metadata" "metadata" {
+  id = "644a152bbaa9ff65a87bd139"
 }
 
 output "network_ports_data" {
-  value = data.vmds_network_ports.all
+  value = data.vmds_cluster_metadata.metadata
 }
 

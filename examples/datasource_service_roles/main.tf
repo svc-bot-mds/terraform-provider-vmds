@@ -11,11 +11,10 @@ provider "vmds" {
   api_token = "API_TOKEN"
 }
 
-data "vmds_cluster_metadata_by_id" "metadata1" {
-id = "644a152bbaa9ff65a87bd139"
+data "vmds_service_roles" "roles"{
+  type = "RABBITMQ"
 }
 
-output "network_ports_data" {
-  value = data.vmds_cluster_metadata_by_id.metadata1
+output "service_roles" {
+  value = data.vmds_service_roles.roles
 }
-

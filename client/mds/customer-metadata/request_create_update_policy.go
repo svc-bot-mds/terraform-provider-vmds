@@ -1,10 +1,9 @@
-package model
+package customer_metadata
 
-type MDSPolicies struct {
-	ID              string              `json:"id"`
+type MdsCreateUpdatePolicyRequest struct {
 	Name            string              `json:"name"`
+	Description     string              `json:"description"`
 	ServiceType     string              `json:"serviceType"`
-	ResourceIds     []string            `json:"resourceIds,omitempty"`
 	PermissionsSpec []MdsPermissionSpec `json:"permissionsSpec,omitempty"`
 	NetworkSpecs    []MdsNetworkSpecs   `json:"networkSpecs,omitempty"`
 }
@@ -16,6 +15,6 @@ type MdsPermissionSpec struct {
 }
 
 type MdsNetworkSpecs struct {
-	CIDR           string   `json:"cidr"`
+	Cidr           string   `json:"cidr"`
 	NetworkPortIds []string `json:"networkPortIds"`
 }

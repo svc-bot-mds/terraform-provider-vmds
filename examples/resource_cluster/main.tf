@@ -25,7 +25,7 @@ data "vmds_network_policies" "create" {
 
 output "network_policies_data" {
   value = {
-    create = data.mds_network_policies.create
+    create = data.vmds_network_policies.create
   }
 }
 
@@ -35,7 +35,7 @@ resource "vmds_cluster" "test" {
   cloud_provider     = local.provider
   instance_size      = local.instance_type
   region             = local.region
-  network_policy_ids = data.mds_network_policies.create.policies[*].id
+  network_policy_ids = data.vmds_network_policies.create.policies[*].id
   tags               = ["mds-tf", "example", "new-tag"]
   timeouts           = {
     create = "10m"
