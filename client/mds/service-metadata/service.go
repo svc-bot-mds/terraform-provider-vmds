@@ -57,6 +57,7 @@ func (s *Service) GetMdsRoles(query *MDSRolesQuery) (model.MdsRoles, error) {
 	return response, nil
 }
 
+
 // GetMdsServiceRoles - Return list of Roles for the service
 func (s *Service) GetMdsServiceRoles(query *MDSRolesQuery) (model.MdsServiceRoles, error) {
 	reqUrl := fmt.Sprintf("%s/%s/%s", s.Endpoint, MdsServices, Roles)
