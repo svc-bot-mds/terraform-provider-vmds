@@ -35,12 +35,12 @@ type policyResource struct {
 }
 
 type policyResourceModel struct {
-	ID             types.String           `tfsdk:"id"`
-	Name           types.String           `tfsdk:"name"`
-	ServiceType    types.String           `tfsdk:"service_type"`
-	PermissionSpec []*PermissionSpecModel `tfsdk:"permission_spec"`
-	NetworkSpec    *NetworkSpecModel      `tfsdk:"network_spec"`
-	ResourceIds    types.Set              `tfsdk:"resource_ids"`
+	ID              types.String           `tfsdk:"id"`
+	Name            types.String           `tfsdk:"name"`
+	ServiceType     types.String           `tfsdk:"service_type"`
+	PermissionSpecs []*PermissionSpecModel `tfsdk:"permission_specs"`
+	NetworkSpec     *NetworkSpecModel      `tfsdk:"network_spec"`
+	ResourceIds     types.Set              `tfsdk:"resource_ids"`
 }
 
 type PermissionSpecModel struct {
@@ -99,7 +99,7 @@ func (r *policyResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 				Computed:    true,
 				ElementType: types.StringType,
 			},
-			"permission_spec": schema.ListNestedAttribute{
+			"permission_specs": schema.ListNestedAttribute{
 				Optional: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -154,7 +154,7 @@ func (r *policyResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	rolesReq := make([]customer_metadata.MdsPermissionSpec, len(plan.PermissionSpec))
+	rolesReq := make([]customer_metadata.MdsPermissionSpec, len(plan.PermissionSpecs))
 
 	// Generate API request body from plan
 	policyRequest := customer_metadata.MdsCreateUpdatePolicyRequest{
@@ -162,7 +162,7 @@ func (r *policyResource) Create(ctx context.Context, req resource.CreateRequest,
 		ServiceType: plan.ServiceType.ValueString(),
 	}
 	if plan.ServiceType.ValueString() == policy_type.RABBITMQ {
-		for i, roleId := range plan.PermissionSpec {
+		for i, roleId := range plan.PermissionSpecs {
 
 			rolesReq[i] = customer_metadata.MdsPermissionSpec{
 				Role:     roleId.Role.ValueString(),
@@ -172,7 +172,7 @@ func (r *policyResource) Create(ctx context.Context, req resource.CreateRequest,
 		}
 		policyRequest.PermissionsSpec = rolesReq
 	} else {
-		networkSpec := &customer_metadata.MdsNetworkSpecs{
+		networkSpec := &customer_metadata.MdsNetworkSpec{
 			Cidr: plan.NetworkSpec.Cidr.ValueString(),
 		}
 		tflog.Debug(ctx, "Create Policy DTO", map[string]interface{}{"dto": plan.NetworkSpec.NetworkPortIds})
@@ -236,28 +236,27 @@ func (r *policyResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	// Generate API request body from plan
-	updateRequest := customer_metadata.MdsCreateUpdatePolicyRequest{}
-	rolesReq := make([]customer_metadata.MdsPermissionSpec, len(plan.PermissionSpec))
+	updateRequest := customer_metadata.MdsCreateUpdatePolicyRequest{
+		Name:        plan.Name.ValueString(),
+		ServiceType: plan.ServiceType.ValueString(),
+	}
+	rolesReq := make([]customer_metadata.MdsPermissionSpec, len(plan.PermissionSpecs))
 
 	if plan.ServiceType.ValueString() == policy_type.RABBITMQ {
-		for i, roleId := range plan.PermissionSpec {
+		for i, roleId := range plan.PermissionSpecs {
 			rolesReq[i] = customer_metadata.MdsPermissionSpec{
 				Role:     roleId.Role.ValueString(),
 				Resource: roleId.Resource.ValueString(),
 			}
 			roleId.Permissions.ElementsAs(ctx, &rolesReq[i].Permissions, true)
 		}
+		updateRequest.PermissionsSpec = rolesReq
 	} else {
-		networkSpec := &customer_metadata.MdsNetworkSpecs{
+		networkSpec := &customer_metadata.MdsNetworkSpec{
 			Cidr: plan.NetworkSpec.Cidr.ValueString(),
 		}
 		plan.NetworkSpec.NetworkPortIds.ElementsAs(ctx, &networkSpec.NetworkPortIds, true)
 		updateRequest.NetworkSpecs = append(updateRequest.NetworkSpecs, networkSpec)
-	}
-	updateRequest.Name = plan.Name.ValueString()
-	updateRequest.ServiceType = plan.ServiceType.ValueString()
-	if plan.ServiceType.ValueString() == service_type.RABBITMQ {
-		updateRequest.PermissionsSpec = rolesReq
 	}
 	tflog.Debug(ctx, "update policy request dto", map[string]interface{}{"dto": updateRequest})
 
@@ -361,17 +360,17 @@ func saveFromPolicyResponse(ctx *context.Context, diagnostics *diag.Diagnostics,
 		if diagnostics.Append(diags...); diagnostics.HasError() {
 			return 1
 		}
-		state.PermissionSpec = roles
+		state.PermissionSpecs = roles
 	} else {
-		tfRoleModels := make([]*NetworkSpecModel, len(policy.NetworkSpec))
-		for i, role := range policy.NetworkSpec {
-			tfRoleModels[i] = &NetworkSpecModel{
-				Cidr: types.StringValue(role.CIDR),
+		tfNetworkSpecModels := make([]*NetworkSpecModel, len(policy.NetworkSpec))
+		for i, networkSpec := range policy.NetworkSpec {
+			tfNetworkSpecModels[i] = &NetworkSpecModel{
+				Cidr: types.StringValue(networkSpec.CIDR),
 			}
-			tags, _ := types.SetValueFrom(*ctx, types.StringType, role.NetworkPortIds)
-			tfRoleModels[i].NetworkPortIds = tags
+			networkPortIds, _ := types.SetValueFrom(*ctx, types.StringType, networkSpec.NetworkPortIds)
+			tfNetworkSpecModels[i].NetworkPortIds = networkPortIds
 		}
-		state.NetworkSpec = tfRoleModels[0]
+		state.NetworkSpec = tfNetworkSpecModels[0]
 	}
 
 	state.ID = types.StringValue(policy.ID)
@@ -385,16 +384,37 @@ func saveFromPolicyResponse(ctx *context.Context, diagnostics *diag.Diagnostics,
 	return 0
 }
 
-func convertFromPermissionSpecDto(ctx *context.Context, roles []*model.MdsPermissionSpec) ([]*PermissionSpecModel, diag.Diagnostics) {
-	tfRoleModels := make([]*PermissionSpecModel, len(roles))
-	for i, role := range roles {
-		tfRoleModels[i] = &PermissionSpecModel{
-			Role:     types.StringValue(role.Role),
-			Resource: types.StringValue(role.Resource),
+func convertFromPermissionSpecDto(ctx *context.Context, roles []*model.MdsPermissionsSpec) ([]*PermissionSpecModel, diag.Diagnostics) {
+	tfPermissionSpecModels := make([]*PermissionSpecModel, len(roles))
+	for i, permissionSpec := range roles {
+		tfPermissionSpecModels[i] = &PermissionSpecModel{
+			Role:     types.StringValue(permissionSpec.Role),
+			Resource: types.StringValue(permissionSpec.Resource),
 		}
-		tags, _ := types.SetValueFrom(*ctx, types.StringType, role.Permissions)
-		tfRoleModels[i].Permissions = tags
+		permissions, _ := types.SetValueFrom(*ctx, types.StringType, permissionSpec.Permissions)
+		tfPermissionSpecModels[i].Permissions = permissions
 	}
 
-	return tfRoleModels, nil
+	return tfPermissionSpecModels, nil
+}
+
+func (r *policyResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var plan policyResourceModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if (plan.NetworkSpec == nil && len(plan.PermissionSpecs) > 0 && plan.ServiceType.ValueString() == policy_type.RABBITMQ) ||
+		plan.NetworkSpec != nil && len(plan.PermissionSpecs) <= 0 && plan.ServiceType.ValueString() == policy_type.NETWORK {
+		return
+	}
+
+	if plan.ServiceType.ValueString() == policy_type.RABBITMQ {
+		resp.Diagnostics.AddError("ERROR:", "Cannot pass NetworkSpec as an input while creating RabbitMQ Policy.")
+	} else {
+		resp.Diagnostics.AddError("ERROR:", "Cannot pass PermissionSpecs as an input while creating a Network Policy.")
+	}
+
 }

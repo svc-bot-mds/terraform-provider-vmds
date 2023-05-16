@@ -5,7 +5,7 @@ type MdsCreateUpdatePolicyRequest struct {
 	Description     string              `json:"description"`
 	ServiceType     string              `json:"serviceType"`
 	PermissionsSpec []MdsPermissionSpec `json:"permissionsSpec,omitempty"`
-	NetworkSpecs    []*MdsNetworkSpecs  `json:"networkSpecs,omitempty"`
+	NetworkSpecs    []*MdsNetworkSpec   `json:"networkSpecs,omitempty"`
 }
 
 type MdsPermissionSpec struct {
@@ -14,7 +14,7 @@ type MdsPermissionSpec struct {
 	Role        string   `json:"role"`
 }
 
-type MdsNetworkSpecs struct {
+type MdsNetworkSpec struct {
 	Cidr           string   `json:"cidr"`
 	NetworkPortIds []string `json:"networkPortIds"`
 }

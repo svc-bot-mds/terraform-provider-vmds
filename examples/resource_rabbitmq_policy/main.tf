@@ -14,7 +14,7 @@ provider "vmds" {
 resource "vmds_policy" "policy_rabbitmq" {
   name = "test-from-tf-dont-use-2"
   service_type = "RABBITMQ"
-  permission_spec = [
+  permission_specs = [
     {permissions: ["monitoring"], role: "monitoring", resource: "cluster:audit-test-11"}
   ]
 }
