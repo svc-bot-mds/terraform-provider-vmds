@@ -25,5 +25,5 @@ data "vmds_regions" "all" {
 }
 
 output "regions_data" {
-  value = data.mds_regions.all
+  value = data.vmds_regions.all
 }

@@ -16,6 +16,8 @@ locals {
   provider           = "aws"
   policy_with_create = ["open-to-all"]
   policy_with_update = ["custom-nw"]
+  instance_type      = 'XX-SMALL'
+  region             = 'us-west-1'
 }
 
 data "vmds_regions" "all" {
@@ -37,8 +39,8 @@ data "vmds_network_policies" "update" {
 
 output "network_policies_data" {
   value = {
-    update = data.mds_network_policies.update
-    create = data.mds_network_policies.create
+    update = data.vmds_network_policies.update
+    create = data.vmds_network_policies.create
   }
 }
 
@@ -48,7 +50,7 @@ resource "vmds_cluster" "test" {
   cloud_provider     = local.provider
   instance_size      = local.instance_type
   region             = local.region
-  network_policy_ids = data.mds_network_policies.create.policies[*].id
+  network_policy_ids = data.vmds_network_policies.create.policies[*].id
   tags               = ["mds-tf", "example", "new-tag"]
   timeouts           = {
     create = "10m"
@@ -57,6 +59,6 @@ resource "vmds_cluster" "test" {
 
 
 resource "vmds_cluster_network_policies_association" "test" {
-  id         = mds_cluster.test.id
-  policy_ids = data.mds_network_policies.update.policies[*].id
+  id         = vmds_cluster.test.id
+  policy_ids = data.vmds_network_policies.update.policies[*].id
 }

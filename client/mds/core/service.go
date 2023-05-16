@@ -134,3 +134,29 @@ func (r *Root) Patch(url *string, reqBody interface{}, dest interface{}) ([]byte
 	}
 	return body, nil
 }
+
+func (r *Root) Put(url *string, reqBody interface{}, dest interface{}) ([]byte, error) {
+	rb, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("BODY: %s", rb)
+	req, err := http.NewRequest(http.MethodPut, *url, strings.NewReader(string(rb)))
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := r.doRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if dest != nil {
+		err = json.Unmarshal(body, &dest)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return body, nil
+}

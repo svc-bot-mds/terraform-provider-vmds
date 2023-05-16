@@ -11,10 +11,10 @@ provider "vmds" {
   api_token = "API_TOKEN"
 }
 
-data "vmds_network_ports" "all" {
+data "vmds_service_roles" "roles"{
+  type = "RABBITMQ"
 }
 
-output "network_ports_data" {
-  value = data.vmds_network_ports.all
+output "service_roles" {
+  value = data.vmds_service_roles.roles
 }
-

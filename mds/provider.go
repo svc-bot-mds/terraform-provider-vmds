@@ -175,6 +175,7 @@ func (p *mdsProvider) DataSources(_ context.Context) []func() datasource.DataSou
 		NewPolicyTypesDataSource,
 		NewClusterMetadataDataSource,
 		NewClustersDatasource,
+		NewServiceRolesDatasource,
 	}
 }
 
@@ -185,5 +186,6 @@ func (p *mdsProvider) Resources(_ context.Context) []func() resource.Resource {
 		NewClusterNetworkPoliciesAssociationResource,
 		NewUserResource,
 		NewServiceAccountResource,
+		NewPolicyResource,
 	}
 }

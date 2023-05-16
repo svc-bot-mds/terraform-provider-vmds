@@ -9,11 +9,11 @@ import (
 )
 
 var (
-	_ datasource.DataSource              = &clusterMetdataDataSource{}
-	_ datasource.DataSourceWithConfigure = &clusterMetdataDataSource{}
+	_ datasource.DataSource              = &clusterMetadataDataSource{}
+	_ datasource.DataSourceWithConfigure = &clusterMetadataDataSource{}
 )
 
-type clusterMetdataDataSourceModel struct {
+type clusterMetadataDataSourceModel struct {
 	Id           types.String `tfsdk:"id"`
 	ProviderName types.String `tfsdk:"provider_name"`
 	Name         types.String `tfsdk:"name"`
@@ -22,20 +22,20 @@ type clusterMetdataDataSourceModel struct {
 }
 
 func NewClusterMetadataDataSource() datasource.DataSource {
-	return &clusterMetdataDataSource{}
+	return &clusterMetadataDataSource{}
 }
 
-type clusterMetdataDataSource struct {
+type clusterMetadataDataSource struct {
 	client *mds.Client
 }
 
 // Metadata returns the data source type name.
-func (d *clusterMetdataDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *clusterMetadataDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_cluster_metadata"
 }
 
 // Schema defines the schema for the data source.
-func (d *clusterMetdataDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *clusterMetadataDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -58,8 +58,8 @@ func (d *clusterMetdataDataSource) Schema(_ context.Context, _ datasource.Schema
 }
 
 // Read refreshes the Terraform state with the latest data.
-func (d *clusterMetdataDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var state clusterMetdataDataSourceModel
+func (d *clusterMetadataDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var state clusterMetadataDataSourceModel
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
@@ -73,7 +73,7 @@ func (d *clusterMetdataDataSource) Read(ctx context.Context, req datasource.Read
 	}
 
 	// Map cluster metadata body to model
-	metadataDetails := clusterMetdataDataSourceModel{
+	metadataDetails := clusterMetadataDataSourceModel{
 		Id:           types.StringValue(clusterMetadata.Id),
 		Name:         types.StringValue(clusterMetadata.Name),
 		ProviderName: types.StringValue(clusterMetadata.Provider),
@@ -91,7 +91,7 @@ func (d *clusterMetdataDataSource) Read(ctx context.Context, req datasource.Read
 }
 
 // Configure adds the provider configured client to the data source.
-func (d *clusterMetdataDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
+func (d *clusterMetadataDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}

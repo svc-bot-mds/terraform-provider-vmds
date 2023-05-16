@@ -2,6 +2,7 @@ package service_metadata
 
 import (
 	"fmt"
+	"github.com/svc-bot-mds/terraform-provider-vmds/client/constants/role_type"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds/core"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/model"
 )
@@ -45,6 +46,23 @@ func (s *Service) GetMdsRoles(query *MDSRolesQuery) (model.MdsRoles, error) {
 	reqUrl := fmt.Sprintf("%s/%s/%s", s.Endpoint, MdsServices, Roles)
 	var response model.MdsRoles
 
+	if query.Size == 0 {
+		query.Size = defaultPage.Size
+	}
+
+	_, err := s.Api.Get(&reqUrl, query, &response)
+	if err != nil {
+		return response, err
+	}
+	return response, nil
+}
+
+
+// GetMdsServiceRoles - Return list of Roles for the service
+func (s *Service) GetMdsServiceRoles(query *MDSRolesQuery) (model.MdsServiceRoles, error) {
+	reqUrl := fmt.Sprintf("%s/%s/%s", s.Endpoint, MdsServices, Roles)
+	var response model.MdsServiceRoles
+	query.Type = role_type.RABBITMQ
 	if query.Size == 0 {
 		query.Size = defaultPage.Size
 	}

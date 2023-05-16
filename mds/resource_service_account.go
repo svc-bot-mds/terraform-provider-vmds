@@ -162,6 +162,13 @@ func (r *serviceAccountResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
+	if len(*svcAccounts.Get()) <= 0 {
+		resp.Diagnostics.AddError("Fetching Service Accounts",
+			"Unable to fetch the created service account",
+		)
+		return
+	}
+
 	// Map response body to schema and populate Computed attribute values
 	createdSvcAccounts := &(*svcAccounts.Get())[0]
 

@@ -16,6 +16,6 @@ data "vmds_policies" "policies" {
 }
 
 output "policies_data" {
-  value = data.mds_policies.policies
+  value = data.vmds_policies.policies
 }
 

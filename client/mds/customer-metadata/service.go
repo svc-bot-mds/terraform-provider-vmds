@@ -206,3 +206,61 @@ func (s *Service) DeleteMdsServiceAccount(id string) error {
 
 	return nil
 }
+
+// CreatePolicy - Submits a request to create policy
+func (s *Service) CreatePolicy(requestBody *MdsCreateUpdatePolicyRequest) (*model.MdsPolicy, error) {
+	if requestBody == nil {
+		return nil, fmt.Errorf("requestBody cannot be nil")
+	}
+	var response model.MdsPolicy
+	urlPath := fmt.Sprintf("%s/%s", s.Endpoint, Policies)
+
+	_, err := s.Api.Post(&urlPath, requestBody, &response)
+	if err != nil {
+		return &response, err
+	}
+
+	return &response, err
+}
+
+// UpdateMdsPolicy - Submits a request to update policy
+func (s *Service) UpdateMdsPolicy(id string, requestBody *MdsCreateUpdatePolicyRequest) error {
+	if id == "" {
+		return fmt.Errorf("policy ID cannot be empty")
+	}
+	if requestBody == nil {
+		return fmt.Errorf("requestBody cannot be nil")
+	}
+	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, Policies, id)
+
+	_, err := s.Api.Put(&urlPath, requestBody, nil)
+	return err
+}
+
+// GetMDSPolicy - Submits a request to fetch policy
+func (s *Service) GetMDSPolicy(id string) (*model.MdsPolicy, error) {
+	if strings.TrimSpace(id) == "" {
+		return nil, fmt.Errorf("ID cannot be empty")
+	}
+	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, Policies, id)
+	var response model.MdsPolicy
+
+	_, err := s.Api.Get(&urlPath, nil, &response)
+	if err != nil {
+		return &response, err
+	}
+
+	return &response, err
+}
+
+// DeleteMdsPolicy - Submits a request to delete policy
+func (s *Service) DeleteMdsPolicy(id string) error {
+	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, Policies, id)
+
+	_, err := s.Api.Delete(&urlPath, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

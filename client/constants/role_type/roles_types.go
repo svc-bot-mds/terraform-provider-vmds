@@ -1,5 +1,6 @@
 package role_type
 
 const (
-	MDS = "MDS"
+	MDS      = "MDS"
+	RABBITMQ = "RABBITMQ"
 )

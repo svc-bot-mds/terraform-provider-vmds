@@ -15,5 +15,5 @@ data "vmds_roles" "roles" {
 }
 
 output "roles_data" {
-  value = data.mds_roles.roles
+  value = data.vmds_roles.roles
 }
