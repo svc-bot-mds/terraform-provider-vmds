@@ -12,10 +12,9 @@ provider "vmds" {
 }
 
 resource "vmds_policy" "policy_rabbitmq" {
-  name = "test-svc-policy-from-tf"
+  name = "test-from-tf-dont-use-2"
   service_type = "RABBITMQ"
   permission_spec = [
     {permissions: ["monitoring"], role: "monitoring", resource: "cluster:audit-test-11"}
   ]
-  network_specs = []
 }

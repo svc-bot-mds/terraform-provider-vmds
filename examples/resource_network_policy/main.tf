@@ -14,8 +14,5 @@ provider "vmds" {
 resource "vmds_policy" "policy_network" {
   name = "network-policy-from-tf"
   service_type = "NETWORK"
-  network_specs = [
-    {cidr: "10.22.55.0/24", network_port_ids: ["rmq-metrics", "rmq-amqps"]}
-  ]
-  permission_spec = []
+  network_spec =  {cidr: "10.22.55.0/24", network_port_ids: ["rmq-streams", "rmq-amqps"]}
 }

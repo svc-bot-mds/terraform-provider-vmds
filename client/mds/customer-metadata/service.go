@@ -30,9 +30,9 @@ func NewService(hostUrl *string, root *core.Root) *Service {
 }
 
 // GetPolicies - Returns list of Policies
-func (s *Service) GetPolicies(query *MdsPoliciesQuery) (model.Paged[model.MDSPolicies], error) {
+func (s *Service) GetPolicies(query *MdsPoliciesQuery) (model.Paged[model.MdsPolicy], error) {
 	reqUrl := fmt.Sprintf("%s/%s", s.Endpoint, Policies)
-	var response model.Paged[model.MDSPolicies]
+	var response model.Paged[model.MdsPolicy]
 
 	if query.Size == 0 {
 		query.Size = defaultPage.Size
@@ -208,11 +208,11 @@ func (s *Service) DeleteMdsServiceAccount(id string) error {
 }
 
 // CreatePolicy - Submits a request to create policy
-func (s *Service) CreatePolicy(requestBody *MdsCreateUpdatePolicyRequest) (*model.MDSPolicies, error) {
+func (s *Service) CreatePolicy(requestBody *MdsCreateUpdatePolicyRequest) (*model.MdsPolicy, error) {
 	if requestBody == nil {
 		return nil, fmt.Errorf("requestBody cannot be nil")
 	}
-	var response model.MDSPolicies
+	var response model.MdsPolicy
 	urlPath := fmt.Sprintf("%s/%s", s.Endpoint, Policies)
 
 	_, err := s.Api.Post(&urlPath, requestBody, &response)
@@ -238,12 +238,12 @@ func (s *Service) UpdateMdsPolicy(id string, requestBody *MdsCreateUpdatePolicyR
 }
 
 // GetMDSPolicy - Submits a request to fetch policy
-func (s *Service) GetMDSPolicy(id string) (*model.MDSPolicies, error) {
+func (s *Service) GetMDSPolicy(id string) (*model.MdsPolicy, error) {
 	if strings.TrimSpace(id) == "" {
 		return nil, fmt.Errorf("ID cannot be empty")
 	}
 	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, Policies, id)
-	var response model.MDSPolicies
+	var response model.MdsPolicy
 
 	_, err := s.Api.Get(&urlPath, nil, &response)
 	if err != nil {

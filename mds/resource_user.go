@@ -215,6 +215,13 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
+	if len(*users.Get()) <= 0 {
+		resp.Diagnostics.AddError("Fetching User",
+			"Unable to fetch the created user",
+		)
+		return
+	}
+
 	// Map response body to schema and populate Computed attribute values
 	createdUser := &(*users.Get())[0]
 

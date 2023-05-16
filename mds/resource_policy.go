@@ -3,7 +3,7 @@ package mds
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -17,11 +17,6 @@ import (
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
 	customer_metadata "github.com/svc-bot-mds/terraform-provider-vmds/client/mds/customer-metadata"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/model"
-	"time"
-)
-
-const (
-	defaultUserCreatePolicyTimeout = 2 * time.Minute
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -40,13 +35,12 @@ type policyResource struct {
 }
 
 type policyResourceModel struct {
-	ID             types.String          `tfsdk:"id"`
-	Name           types.String          `tfsdk:"name"`
-	ServiceType    types.String          `tfsdk:"service_type"`
-	PermissionSpec []PermissionSpecModel `tfsdk:"permission_spec"`
-	NetworkSpecs   []NetworkSpecModel    `tfsdk:"network_specs"`
-	ResourceIds    types.Set             `tfsdk:"resource_ids"`
-	Timeouts       timeouts.Value        `tfsdk:"timeouts"`
+	ID             types.String           `tfsdk:"id"`
+	Name           types.String           `tfsdk:"name"`
+	ServiceType    types.String           `tfsdk:"service_type"`
+	PermissionSpec []*PermissionSpecModel `tfsdk:"permission_spec"`
+	NetworkSpec    *NetworkSpecModel      `tfsdk:"network_spec"`
+	ResourceIds    types.Set              `tfsdk:"resource_ids"`
 }
 
 type PermissionSpecModel struct {
@@ -105,11 +99,8 @@ func (r *policyResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 				Computed:    true,
 				ElementType: types.StringType,
 			},
-			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
-				Create: true,
-			}),
 			"permission_spec": schema.ListNestedAttribute{
-				Required: true,
+				Optional: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"role": schema.StringAttribute{
@@ -125,17 +116,24 @@ func (r *policyResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 					},
 				},
 			},
-			"network_specs": schema.ListNestedAttribute{
-				Required: true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"cidr": schema.StringAttribute{
-							Required: true,
+			"network_spec": schema.SingleNestedAttribute{
+				Optional: true,
+
+				CustomType: types.ObjectType{
+					AttrTypes: map[string]attr.Type{
+						"cidr": types.StringType,
+						"network_port_ids": types.SetType{
+							ElemType: types.StringType,
 						},
-						"network_port_ids": schema.SetAttribute{
-							Required:    true,
-							ElementType: types.StringType,
-						},
+					},
+				},
+				Attributes: map[string]schema.Attribute{
+					"cidr": schema.StringAttribute{
+						Required: true,
+					},
+					"network_port_ids": schema.SetAttribute{
+						Required:    true,
+						ElementType: types.StringType,
 					},
 				},
 			},
@@ -156,18 +154,13 @@ func (r *policyResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	// Create() is passed a default timeout to use if no value
-	// has been supplied in the Terraform configuration.
-	createTimeout, diags := plan.Timeouts.Create(ctx, defaultUserCreatePolicyTimeout)
-	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, createTimeout)
-	defer cancel()
-
 	rolesReq := make([]customer_metadata.MdsPermissionSpec, len(plan.PermissionSpec))
-	networkSpecs := make([]customer_metadata.MdsNetworkSpecs, len(plan.NetworkSpecs))
+
+	// Generate API request body from plan
+	policyRequest := customer_metadata.MdsCreateUpdatePolicyRequest{
+		Name:        plan.Name.ValueString(),
+		ServiceType: plan.ServiceType.ValueString(),
+	}
 	if plan.ServiceType.ValueString() == policy_type.RABBITMQ {
 		for i, roleId := range plan.PermissionSpec {
 
@@ -177,24 +170,15 @@ func (r *policyResource) Create(ctx context.Context, req resource.CreateRequest,
 			}
 			roleId.Permissions.ElementsAs(ctx, &rolesReq[i].Permissions, true)
 		}
-	} else {
-		for i, networkSpec := range plan.NetworkSpecs {
-			networkSpecs[i] = customer_metadata.MdsNetworkSpecs{
-				Cidr: networkSpec.Cidr.ValueString(),
-			}
-			networkSpec.NetworkPortIds.ElementsAs(ctx, &networkSpecs[i].NetworkPortIds, true)
-		}
-	}
-
-	// Generate API request body from plan
-	policyRequest := customer_metadata.MdsCreateUpdatePolicyRequest{
-		Name:        plan.Name.ValueString(),
-		ServiceType: plan.ServiceType.ValueString(),
-	}
-	if plan.ServiceType.ValueString() == service_type.RABBITMQ {
 		policyRequest.PermissionsSpec = rolesReq
 	} else {
-		policyRequest.NetworkSpecs = networkSpecs
+		networkSpec := &customer_metadata.MdsNetworkSpecs{
+			Cidr: plan.NetworkSpec.Cidr.ValueString(),
+		}
+		tflog.Debug(ctx, "Create Policy DTO", map[string]interface{}{"dto": plan.NetworkSpec.NetworkPortIds})
+
+		plan.NetworkSpec.NetworkPortIds.ElementsAs(ctx, &networkSpec.NetworkPortIds, true)
+		policyRequest.NetworkSpecs = append(policyRequest.NetworkSpecs, networkSpec)
 	}
 
 	tflog.Debug(ctx, "Create Policy DTO", map[string]interface{}{"dto": policyRequest})
@@ -208,12 +192,19 @@ func (r *policyResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 
 	policies, err := r.client.CustomerMetadata.GetPolicies(&customer_metadata.MdsPoliciesQuery{
-		Type: plan.ServiceType.ValueString(),
-		Name: plan.Name.ValueString(),
+		Type:  plan.ServiceType.ValueString(),
+		Names: []string{plan.Name.ValueString()},
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Fetching Policy",
 			"Could not fetch policy, unexpected error: "+err.Error(),
+		)
+		return
+	}
+
+	if len(*policies.Get()) <= 0 {
+		resp.Diagnostics.AddError("Fetching Policy",
+			"Unable to fetch the created policy",
 		)
 		return
 	}
@@ -247,7 +238,6 @@ func (r *policyResource) Update(ctx context.Context, req resource.UpdateRequest,
 	// Generate API request body from plan
 	updateRequest := customer_metadata.MdsCreateUpdatePolicyRequest{}
 	rolesReq := make([]customer_metadata.MdsPermissionSpec, len(plan.PermissionSpec))
-	networkSpecs := make([]customer_metadata.MdsNetworkSpecs, len(plan.NetworkSpecs))
 
 	if plan.ServiceType.ValueString() == policy_type.RABBITMQ {
 		for i, roleId := range plan.PermissionSpec {
@@ -258,19 +248,16 @@ func (r *policyResource) Update(ctx context.Context, req resource.UpdateRequest,
 			roleId.Permissions.ElementsAs(ctx, &rolesReq[i].Permissions, true)
 		}
 	} else {
-		for i, networkSpec := range plan.NetworkSpecs {
-			networkSpecs[i] = customer_metadata.MdsNetworkSpecs{
-				Cidr: networkSpec.Cidr.ValueString(),
-			}
-			networkSpec.NetworkPortIds.ElementsAs(ctx, &networkSpecs[i].NetworkPortIds, true)
+		networkSpec := &customer_metadata.MdsNetworkSpecs{
+			Cidr: plan.NetworkSpec.Cidr.ValueString(),
 		}
+		plan.NetworkSpec.NetworkPortIds.ElementsAs(ctx, &networkSpec.NetworkPortIds, true)
+		updateRequest.NetworkSpecs = append(updateRequest.NetworkSpecs, networkSpec)
 	}
 	updateRequest.Name = plan.Name.ValueString()
 	updateRequest.ServiceType = plan.ServiceType.ValueString()
 	if plan.ServiceType.ValueString() == service_type.RABBITMQ {
 		updateRequest.PermissionsSpec = rolesReq
-	} else {
-		updateRequest.NetworkSpecs = networkSpecs
 	}
 	tflog.Debug(ctx, "update policy request dto", map[string]interface{}{"dto": updateRequest})
 
@@ -314,14 +301,6 @@ func (r *policyResource) Delete(ctx context.Context, request resource.DeleteRequ
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	deleteTimeout, diags := state.Timeouts.Delete(ctx, defaultDeleteTimeout)
-	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
-	defer cancel()
 
 	// Submit request to delete MDS Policy
 	err := r.client.CustomerMetadata.DeleteMdsPolicy(state.ID.ValueString())
@@ -375,21 +354,24 @@ func (r *policyResource) Read(ctx context.Context, req resource.ReadRequest, res
 	tflog.Info(ctx, "END__Read")
 }
 
-func saveFromPolicyResponse(ctx *context.Context, diagnostics *diag.Diagnostics, state *policyResourceModel, policy *model.MDSPolicies) int8 {
-	tflog.Info(*ctx, "Saving response to resourceModel state/plan", map[string]interface{}{"user": *policy})
-
-	if state.ServiceType.ValueString() == service_type.RABBITMQ {
-		roles, diags := convertFromPermissionSpecDto(ctx, &policy.PermissionsSpec)
+func saveFromPolicyResponse(ctx *context.Context, diagnostics *diag.Diagnostics, state *policyResourceModel, policy *model.MdsPolicy) int8 {
+	tflog.Info(*ctx, "Saving response to resourceModel state/plan", map[string]interface{}{"policy": *policy})
+	if policy.ServiceType == service_type.RABBITMQ {
+		roles, diags := convertFromPermissionSpecDto(ctx, policy.PermissionsSpec)
 		if diagnostics.Append(diags...); diagnostics.HasError() {
 			return 1
 		}
 		state.PermissionSpec = roles
 	} else {
-		roles, diags := convertFromNetworkSpecDto(ctx, &policy.NetworkSpecs)
-		if diagnostics.Append(diags...); diagnostics.HasError() {
-			return 1
+		tfRoleModels := make([]*NetworkSpecModel, len(policy.NetworkSpec))
+		for i, role := range policy.NetworkSpec {
+			tfRoleModels[i] = &NetworkSpecModel{
+				Cidr: types.StringValue(role.CIDR),
+			}
+			tags, _ := types.SetValueFrom(*ctx, types.StringType, role.NetworkPortIds)
+			tfRoleModels[i].NetworkPortIds = tags
 		}
-		state.NetworkSpecs = roles
+		state.NetworkSpec = tfRoleModels[0]
 	}
 
 	state.ID = types.StringValue(policy.ID)
@@ -403,10 +385,10 @@ func saveFromPolicyResponse(ctx *context.Context, diagnostics *diag.Diagnostics,
 	return 0
 }
 
-func convertFromPermissionSpecDto(ctx *context.Context, roles *[]model.MdsPermissionSpec) ([]PermissionSpecModel, diag.Diagnostics) {
-	tfRoleModels := make([]PermissionSpecModel, len(*roles))
-	for i, role := range *roles {
-		tfRoleModels[i] = PermissionSpecModel{
+func convertFromPermissionSpecDto(ctx *context.Context, roles []*model.MdsPermissionSpec) ([]*PermissionSpecModel, diag.Diagnostics) {
+	tfRoleModels := make([]*PermissionSpecModel, len(roles))
+	for i, role := range roles {
+		tfRoleModels[i] = &PermissionSpecModel{
 			Role:     types.StringValue(role.Role),
 			Resource: types.StringValue(role.Resource),
 		}
@@ -415,17 +397,4 @@ func convertFromPermissionSpecDto(ctx *context.Context, roles *[]model.MdsPermis
 	}
 
 	return tfRoleModels, nil
-}
-
-func convertFromNetworkSpecDto(ctx *context.Context, networkSpecs *[]model.MdsNetworkSpecs) ([]NetworkSpecModel, diag.Diagnostics) {
-	networkSpecModels := make([]NetworkSpecModel, len(*networkSpecs))
-	for i, networkspec := range *networkSpecs {
-		networkSpecModels[i] = NetworkSpecModel{
-			Cidr: types.StringValue(networkspec.CIDR),
-		}
-		networkPortIds, _ := types.SetValueFrom(*ctx, types.StringType, networkspec.NetworkPortIds)
-		networkSpecModels[i].NetworkPortIds = networkPortIds
-	}
-
-	return networkSpecModels, nil
 }

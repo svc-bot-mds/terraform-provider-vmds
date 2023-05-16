@@ -6,7 +6,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/svc-bot-mds/terraform-provider-vmds/client/constants/service_type"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds/controller"
 )
@@ -16,13 +15,13 @@ var (
 	_ datasource.DataSourceWithConfigure = &clustersDatasource{}
 )
 
-// instanceTypesDataSourceModel maps the data source schema data.
+// clustersDatasourceModel maps the data source schema data.
 type clustersDatasourceModel struct {
 	Clusters    []clustersModel `tfsdk:"clusters"`
 	ServiceType types.String    `tfsdk:"service_type"`
 }
 
-// instanceTypesModel maps coffees schema data.
+// clustersModel maps clusters schema data.
 type clustersModel struct {
 	ID   types.String `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
@@ -74,7 +73,7 @@ func (d *clustersDatasource) Read(ctx context.Context, req datasource.ReadReques
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 
 	query := &controller.MdsClustersQuery{
-		ServiceType: service_type.RABBITMQ,
+		ServiceType: state.ServiceType.ValueString(),
 	}
 
 	clusters, err := d.client.Controller.GetMdsClusters(query)

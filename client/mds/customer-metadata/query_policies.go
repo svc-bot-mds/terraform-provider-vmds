@@ -7,6 +7,5 @@ type MdsPoliciesQuery struct {
 	Type       string   `schema:"serviceType"`
 	Names      []string `schema:"name,omitempty"`
 	ResourceId string   `schema:"resourceId,omitempty"`
-	Name       string   `schema:"name,omitempty"`
 	model.PageQuery
 }

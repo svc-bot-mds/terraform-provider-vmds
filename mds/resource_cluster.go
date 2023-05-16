@@ -273,6 +273,14 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		)
 		return
 	}
+
+	if len(*clusters.Get()) <= 0 {
+		resp.Diagnostics.AddError("Fetching Clusters",
+			"Unable to fetch the created cluster",
+		)
+		return
+	}
+
 	// Map response body to schema and populate Computed attribute values
 	createdCluster := &(*clusters.Get())[0]
 	for createdCluster.Status != "READY" {

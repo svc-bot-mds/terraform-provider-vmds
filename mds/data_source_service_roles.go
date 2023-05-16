@@ -62,7 +62,6 @@ func (d *serviceRolesDatasource) Schema(_ context.Context, _ datasource.SchemaRe
 			},
 			"roles": schema.ListNestedAttribute{
 				Computed: true,
-				Optional: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"role_id": schema.StringAttribute{
