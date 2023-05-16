@@ -240,17 +240,17 @@ func (r *policyResource) Update(ctx context.Context, req resource.UpdateRequest,
 		Name:        plan.Name.ValueString(),
 		ServiceType: plan.ServiceType.ValueString(),
 	}
-	rolesReq := make([]customer_metadata.MdsPermissionSpec, len(plan.PermissionSpecs))
+	permissionSpecRequest := make([]customer_metadata.MdsPermissionSpec, len(plan.PermissionSpecs))
 
 	if plan.ServiceType.ValueString() == policy_type.RABBITMQ {
 		for i, roleId := range plan.PermissionSpecs {
-			rolesReq[i] = customer_metadata.MdsPermissionSpec{
+			permissionSpecRequest[i] = customer_metadata.MdsPermissionSpec{
 				Role:     roleId.Role.ValueString(),
 				Resource: roleId.Resource.ValueString(),
 			}
-			roleId.Permissions.ElementsAs(ctx, &rolesReq[i].Permissions, true)
+			roleId.Permissions.ElementsAs(ctx, &permissionSpecRequest[i].Permissions, true)
 		}
-		updateRequest.PermissionsSpec = rolesReq
+		updateRequest.PermissionsSpec = permissionSpecRequest
 	} else {
 		networkSpec := &customer_metadata.MdsNetworkSpec{
 			Cidr: plan.NetworkSpec.Cidr.ValueString(),
@@ -356,11 +356,11 @@ func (r *policyResource) Read(ctx context.Context, req resource.ReadRequest, res
 func saveFromPolicyResponse(ctx *context.Context, diagnostics *diag.Diagnostics, state *policyResourceModel, policy *model.MdsPolicy) int8 {
 	tflog.Info(*ctx, "Saving response to resourceModel state/plan", map[string]interface{}{"policy": *policy})
 	if policy.ServiceType == service_type.RABBITMQ {
-		roles, diags := convertFromPermissionSpecDto(ctx, policy.PermissionsSpec)
+		tfPermissionSpecModel, diags := convertFromPermissionSpecDto(ctx, policy.PermissionsSpec)
 		if diagnostics.Append(diags...); diagnostics.HasError() {
 			return 1
 		}
-		state.PermissionSpecs = roles
+		state.PermissionSpecs = tfPermissionSpecModel
 	} else {
 		tfNetworkSpecModels := make([]*NetworkSpecModel, len(policy.NetworkSpec))
 		for i, networkSpec := range policy.NetworkSpec {
