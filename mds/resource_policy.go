@@ -412,9 +412,9 @@ func (r *policyResource) ValidateConfig(ctx context.Context, req resource.Valida
 	}
 
 	if plan.ServiceType.ValueString() == policy_type.RABBITMQ {
-		resp.Diagnostics.AddError("ERROR:", "Cannot pass NetworkSpec as an input while creating RabbitMQ Policy.")
+		resp.Diagnostics.AddError("Validation Failed", "Please pass only permission_specs while creating RabbitMQ Policy.")
 	} else {
-		resp.Diagnostics.AddError("ERROR:", "Cannot pass PermissionSpecs as an input while creating a Network Policy.")
+		resp.Diagnostics.AddError("Validation Failed", "Please pass only network_spec while creating Network Policy")
 	}
 
 }
