@@ -11,6 +11,9 @@ provider "vmds" {
   api_token = "API_TOKEN"
 }
 
+locals {
+  policies = ["gya-policy","eu301"]
+}
 
 data "vmds_policies" "policies" {
 }
@@ -22,5 +25,10 @@ output "policies_data" {
 resource "vmds_service_account" "svc_account" {
   name = "test-svc-tf-update1"
   tags = ["update-svc-acct","from-tf"]
-  policy_ids = ["64539a8f7d85190f7e5ae1e1","644a15e5df79724efa6b77ec"]
+  policy_ids =  [for policy in data.vmds_policies.policies.policies: policy.id if contains(local.policies, policy.name) ]
+
+  // non editable fields
+  lifecycle {
+    ignore_changes = [name]
+  }
 }

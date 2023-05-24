@@ -26,8 +26,8 @@ import (
 )
 
 const (
-	defaultCreateTimeout = 20 * time.Minute
-	defaultDeleteTimeout = 5 * time.Minute
+	defaultCreateTimeout = 3 * time.Minute
+	defaultDeleteTimeout = 1 * time.Minute
 )
 
 // Ensure the implementation satisfies the expected interfaces.

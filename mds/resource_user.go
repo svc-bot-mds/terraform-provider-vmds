@@ -94,7 +94,11 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 				},
 			},
 			"email": schema.StringAttribute{
-				Required: true,
+				MarkdownDescription: "Updating the email results in deletion of existing user  and new user with updated email/name is created.",
+				Required:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"status": schema.StringAttribute{
 				Computed: true,

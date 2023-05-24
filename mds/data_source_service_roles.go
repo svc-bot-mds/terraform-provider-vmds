@@ -24,16 +24,10 @@ type ServiceRolesDataSourceModel struct {
 
 // ServiceRolesModel maps role schema data.
 type ServiceRolesModel struct {
-	RoleId      types.String                     `tfsdk:"role_id"`
-	Name        types.String                     `tfsdk:"name"`
-	Description types.String                     `tfsdk:"description"`
-	Type        types.String                     `tfsdk:"type"`
-	Permissions []MdsServiceRolePermissionsModel `tfsdk:"permissions"`
-}
-
-type MdsServiceRolePermissionsModel struct {
+	RoleId       types.String `tfsdk:"role_id"`
 	Name         types.String `tfsdk:"name"`
 	Description  types.String `tfsdk:"description"`
+	Type         types.String `tfsdk:"type"`
 	PermissionId types.String `tfsdk:"permission_id"`
 }
 
@@ -76,21 +70,8 @@ func (d *serviceRolesDatasource) Schema(_ context.Context, _ datasource.SchemaRe
 						"type": schema.StringAttribute{
 							Computed: true,
 						},
-						"permissions": schema.ListNestedAttribute{
+						"permission_id": schema.StringAttribute{
 							Computed: true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"description": schema.StringAttribute{
-										Computed: true,
-									},
-									"name": schema.StringAttribute{
-										Computed: true,
-									},
-									"permission_id": schema.StringAttribute{
-										Computed: true,
-									},
-								},
-							},
 						},
 					},
 				},
@@ -117,27 +98,16 @@ func (d *serviceRolesDatasource) Read(ctx context.Context, req datasource.ReadRe
 		)
 		return
 	}
-	var permissionsVal []MdsServiceRolePermissionsModel
+
 	for _, role := range rolesResponse.Embedded.ServiceRoleDTO[0].Roles {
-		for _, permissionList := range role.Permissions {
-			permission := MdsServiceRolePermissionsModel{
-				Name:         types.StringValue(permissionList.Name),
-				Description:  types.StringValue(permissionList.Description),
-				PermissionId: types.StringValue(permissionList.PermissionId),
-			}
-			permissionsVal = append(permissionsVal, permission)
+		roleList := ServiceRolesModel{
+			RoleId:       types.StringValue(role.RoleID),
+			Name:         types.StringValue(role.Name),
+			Description:  types.StringValue(role.Description),
+			Type:         types.StringValue(role.Type),
+			PermissionId: types.StringValue(role.Permissions[0].PermissionId),
 		}
-		// Extract the roles from the unmarshalled struct
-		for _, role := range rolesResponse.Embedded.ServiceRoleDTO[0].Roles {
-			roleList := ServiceRolesModel{
-				RoleId:      types.StringValue(role.RoleID),
-				Name:        types.StringValue(role.Name),
-				Description: types.StringValue(role.Description),
-				Type:        types.StringValue(role.Type),
-				Permissions: permissionsVal,
-			}
-			state.Roles = append(state.Roles, roleList)
-		}
+		state.Roles = append(state.Roles, roleList)
 	}
 
 	// Set state
