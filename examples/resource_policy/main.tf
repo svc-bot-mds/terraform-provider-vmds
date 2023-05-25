@@ -10,8 +10,10 @@ provider "vmds" {
   host     = "MDS_HOST_URL"
   api_token = "API_TOKEN"
 }
+
 locals {
-  cluster_name ="test-1"
+  cluster_name ="test"
+  queue_name ="dc"
 }
 
 data "vmds_clusters" "cluster_list"{
@@ -22,8 +24,16 @@ data "vmds_service_roles" "roles"{
   type = "RABBITMQ"
 }
 
+data "vmds_cluster_metadata" "metadata" {
+  id = "6465f3ae265b393b4e42e9bd"
+}
+
+output "cluster_metadata" {
+  value = data.vmds_cluster_metadata.metadata
+}
+
 resource "vmds_policy" "policy_rabbitmq" {
-  name = "test-tf-dont-use-2"
+  name = "test-tf"
   service_type = "RABBITMQ"
   permission_specs = [
     {
@@ -31,6 +41,10 @@ resource "vmds_policy" "policy_rabbitmq" {
       role: "read",
       resource: "cluster:${local.cluster_name}"
     },
+    {
+      "permissions":["write"],
+      "role":"write",
+      "resource":"cluster:${local.cluster_name}/queue:${local.queue_name}"}
   ]
 }
 

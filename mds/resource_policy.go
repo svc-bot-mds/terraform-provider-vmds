@@ -18,6 +18,7 @@ import (
 	customer_metadata "github.com/svc-bot-mds/terraform-provider-vmds/client/mds/customer-metadata"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/model"
 	"regexp"
+	"sort"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -174,6 +175,7 @@ func (r *policyResource) Create(ctx context.Context, req resource.CreateRequest,
 			}
 			roleId.Permissions.ElementsAs(ctx, &rolesReq[i].Permissions, true)
 		}
+		sort.Slice(rolesReq, func(i, j int) bool { return rolesReq[i].Role < rolesReq[j].Role })
 		policyRequest.PermissionsSpec = rolesReq
 	} else {
 		networkSpec := &customer_metadata.MdsNetworkSpec{
@@ -364,6 +366,12 @@ func saveFromPolicyResponse(ctx *context.Context, diagnostics *diag.Diagnostics,
 		if diagnostics.Append(diags...); diagnostics.HasError() {
 			return 1
 		}
+
+		sort.Slice(tfPermissionSpecModel, func(i, j int) bool {
+			roleI := tfPermissionSpecModel[i].Role.ValueString()
+			roleJ := tfPermissionSpecModel[j].Role.ValueString()
+			return roleI < roleJ
+		})
 		state.PermissionSpecs = tfPermissionSpecModel
 	} else {
 		tfNetworkSpecModels := make([]*NetworkSpecModel, len(policy.NetworkSpec))
@@ -398,7 +406,6 @@ func convertFromPermissionSpecDto(ctx *context.Context, roles []*model.MdsPermis
 		permissions, _ := types.SetValueFrom(*ctx, types.StringType, permissionSpec.Permissions)
 		tfPermissionSpecModels[i].Permissions = permissions
 	}
-
 	return tfPermissionSpecModels, nil
 }
 

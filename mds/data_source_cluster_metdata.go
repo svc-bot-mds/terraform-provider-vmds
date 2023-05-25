@@ -14,11 +14,37 @@ var (
 )
 
 type clusterMetadataDataSourceModel struct {
-	Id           types.String `tfsdk:"id"`
-	ProviderName types.String `tfsdk:"provider_name"`
-	Name         types.String `tfsdk:"name"`
-	ServiceType  types.String `tfsdk:"service_type"`
-	Status       types.String `tfsdk:"status"`
+	Id           types.String     `tfsdk:"id"`
+	ProviderName types.String     `tfsdk:"provider_name"`
+	Name         types.String     `tfsdk:"name"`
+	ServiceType  types.String     `tfsdk:"service_type"`
+	Status       types.String     `tfsdk:"status"`
+	Vhosts       []VHostsModel    `tfsdk:"vhosts"`
+	Queues       []QueuesModel    `tfsdk:"queues"`
+	Exchanges    []ExchangesModel `tfsdk:"exchanges"`
+	Bindings     []BindingsModel  `tfsdk:"bindings"`
+}
+
+type VHostsModel struct {
+	Name types.String `tfsdk:"name"`
+}
+
+type QueuesModel struct {
+	Name  types.String `tfsdk:"name"`
+	VHost types.String `tfsdk:"vhost"`
+}
+
+type ExchangesModel struct {
+	Name  types.String `tfsdk:"name"`
+	VHost types.String `tfsdk:"vhost"`
+}
+
+type BindingsModel struct {
+	Source          types.String `tfsdk:"source"`
+	VHost           types.String `tfsdk:"vhost"`
+	RoutingKey      types.String `tfsdk:"routing_key"`
+	Destination     types.String `tfsdk:"destination"`
+	DestinationType types.String `tfsdk:"destination_type"`
 }
 
 func NewClusterMetadataDataSource() datasource.DataSource {
@@ -53,6 +79,64 @@ func (d *clusterMetadataDataSource) Schema(_ context.Context, _ datasource.Schem
 			"status": schema.StringAttribute{
 				Computed: true,
 			},
+			"vhosts": schema.ListNestedAttribute{
+				Computed: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Computed: true,
+						},
+					},
+				},
+			},
+			"queues": schema.ListNestedAttribute{
+				Computed: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Computed: true,
+						},
+						"vhost": schema.StringAttribute{
+							Computed: true,
+						},
+					},
+				},
+			},
+			"exchanges": schema.ListNestedAttribute{
+				Computed: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Computed: true,
+						},
+						"vhost": schema.StringAttribute{
+							Computed: true,
+						},
+					},
+				},
+			},
+			"bindings": schema.ListNestedAttribute{
+				Computed: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"source": schema.StringAttribute{
+							Computed: true,
+						},
+						"vhost": schema.StringAttribute{
+							Computed: true,
+						},
+						"routing_key": schema.StringAttribute{
+							Computed: true,
+						},
+						"destination": schema.StringAttribute{
+							Computed: true,
+						},
+						"destination_type": schema.StringAttribute{
+							Computed: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -79,6 +163,46 @@ func (d *clusterMetadataDataSource) Read(ctx context.Context, req datasource.Rea
 		ProviderName: types.StringValue(clusterMetadata.Provider),
 		ServiceType:  types.StringValue(clusterMetadata.ServiceType),
 		Status:       types.StringValue(clusterMetadata.Status),
+	}
+
+	if len(clusterMetadata.VHosts) > 0 {
+		// Map response body to model
+		for _, vhost := range clusterMetadata.VHosts {
+			vhosts := VHostsModel{
+				Name: types.StringValue(vhost.Name),
+			}
+			metadataDetails.Vhosts = append(state.Vhosts, vhosts)
+		}
+	}
+	if len(clusterMetadata.Bindings) > 0 {
+		for _, binding := range clusterMetadata.Bindings {
+			bindings := BindingsModel{
+				Source:          types.StringValue(binding.Source),
+				DestinationType: types.StringValue(binding.DestinationType),
+				Destination:     types.StringValue(binding.Destination),
+				VHost:           types.StringValue(binding.VHost),
+				RoutingKey:      types.StringValue(binding.RoutingKey),
+			}
+			metadataDetails.Bindings = append(state.Bindings, bindings)
+		}
+	}
+	if len(clusterMetadata.Queues) > 0 {
+		for _, queue := range clusterMetadata.Queues {
+			queues := QueuesModel{
+				Name:  types.StringValue(queue.Name),
+				VHost: types.StringValue(queue.VHost),
+			}
+			metadataDetails.Queues = append(state.Queues, queues)
+		}
+	}
+	if len(clusterMetadata.Exchanges) > 0 {
+		for _, exchange := range clusterMetadata.Exchanges {
+			exchanges := ExchangesModel{
+				Name:  types.StringValue(exchange.Name),
+				VHost: types.StringValue(exchange.VHost),
+			}
+			metadataDetails.Exchanges = append(state.Exchanges, exchanges)
+		}
 	}
 
 	state = metadataDetails
