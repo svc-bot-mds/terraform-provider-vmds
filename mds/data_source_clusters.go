@@ -18,6 +18,7 @@ var (
 // clustersDatasourceModel maps the data source schema data.
 type clustersDatasourceModel struct {
 	Clusters    []clustersModel `tfsdk:"clusters"`
+	ID          types.String    `tfsdk:"id"`
 	ServiceType types.String    `tfsdk:"service_type"`
 }
 
@@ -48,6 +49,10 @@ func (d *clustersDatasource) Schema(_ context.Context, _ datasource.SchemaReques
 		Attributes: map[string]schema.Attribute{
 			"service_type": schema.StringAttribute{
 				Required: true,
+			},
+			"id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
 			},
 			"clusters": schema.ListNestedAttribute{
 				Computed: true,
@@ -94,6 +99,7 @@ func (d *clustersDatasource) Read(ctx context.Context, req datasource.ReadReques
 		state.Clusters = append(state.Clusters, cluster)
 	}
 
+	state.ID = types.StringValue("placeholder")
 	// Set state
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

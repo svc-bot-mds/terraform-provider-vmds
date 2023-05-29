@@ -14,6 +14,7 @@ provider "vmds" {
 locals {
   account_type  = "USER_ACCOUNT"
   service_roles = ["Developer", "Admin"]
+  policies = ["gya-policy","eu301"]
 }
 
 data "vmds_roles" "all" {
@@ -31,11 +32,16 @@ output "policies_data" {
 }
 
 resource "vmds_user" "temp" {
-  email      = "developer@vmware.com"
-  policy_ids = ["64539a8f7d85190f7e5ae1e1"]
+  email      = "developer11@vmware.com"
   tags       = ["new-user-tf", "update-tf-user"]
   role_ids   = [for role in data.vmds_roles.all.roles : role.role_id if contains(local.service_roles, role.name)]
+  policy_ids = [for policy in data.vmds_policies.policies.policies: policy.id if contains(local.policies, policy.name) ]
   timeouts   = {
     create = "1m"
+  }
+
+  // non editable fields
+  lifecycle {
+    ignore_changes = [email, status]
   }
 }

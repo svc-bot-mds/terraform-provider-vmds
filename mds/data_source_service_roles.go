@@ -18,22 +18,17 @@ var (
 
 // ServiceRolesDataSourceModel maps the data source schema data.
 type ServiceRolesDataSourceModel struct {
+	Id    types.String        `tfsdk:"id"`
 	Roles []ServiceRolesModel `tfsdk:"roles"`
 	Type  types.String        `tfsdk:"type"`
 }
 
 // ServiceRolesModel maps role schema data.
 type ServiceRolesModel struct {
-	RoleId      types.String                     `tfsdk:"role_id"`
-	Name        types.String                     `tfsdk:"name"`
-	Description types.String                     `tfsdk:"description"`
-	Type        types.String                     `tfsdk:"type"`
-	Permissions []MdsServiceRolePermissionsModel `tfsdk:"permissions"`
-}
-
-type MdsServiceRolePermissionsModel struct {
+	RoleId       types.String `tfsdk:"role_id"`
 	Name         types.String `tfsdk:"name"`
 	Description  types.String `tfsdk:"description"`
+	Type         types.String `tfsdk:"type"`
 	PermissionId types.String `tfsdk:"permission_id"`
 }
 
@@ -57,6 +52,10 @@ func (d *serviceRolesDatasource) Metadata(_ context.Context, req datasource.Meta
 func (d *serviceRolesDatasource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
+			},
 			"type": schema.StringAttribute{
 				Required: true,
 			},
@@ -76,21 +75,8 @@ func (d *serviceRolesDatasource) Schema(_ context.Context, _ datasource.SchemaRe
 						"type": schema.StringAttribute{
 							Computed: true,
 						},
-						"permissions": schema.ListNestedAttribute{
+						"permission_id": schema.StringAttribute{
 							Computed: true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"description": schema.StringAttribute{
-										Computed: true,
-									},
-									"name": schema.StringAttribute{
-										Computed: true,
-									},
-									"permission_id": schema.StringAttribute{
-										Computed: true,
-									},
-								},
-							},
 						},
 					},
 				},
@@ -117,29 +103,18 @@ func (d *serviceRolesDatasource) Read(ctx context.Context, req datasource.ReadRe
 		)
 		return
 	}
-	var permissionsVal []MdsServiceRolePermissionsModel
-	for _, role := range rolesResponse.Embedded.ServiceRoleDTO[0].Roles {
-		for _, permissionList := range role.Permissions {
-			permission := MdsServiceRolePermissionsModel{
-				Name:         types.StringValue(permissionList.Name),
-				Description:  types.StringValue(permissionList.Description),
-				PermissionId: types.StringValue(permissionList.PermissionId),
-			}
-			permissionsVal = append(permissionsVal, permission)
-		}
-		// Extract the roles from the unmarshalled struct
-		for _, role := range rolesResponse.Embedded.ServiceRoleDTO[0].Roles {
-			roleList := ServiceRolesModel{
-				RoleId:      types.StringValue(role.RoleID),
-				Name:        types.StringValue(role.Name),
-				Description: types.StringValue(role.Description),
-				Type:        types.StringValue(role.Type),
-				Permissions: permissionsVal,
-			}
-			state.Roles = append(state.Roles, roleList)
-		}
-	}
 
+	for _, role := range rolesResponse.Embedded.ServiceRoleDTO[0].Roles {
+		roleList := ServiceRolesModel{
+			RoleId:       types.StringValue(role.RoleID),
+			Name:         types.StringValue(role.Name),
+			Description:  types.StringValue(role.Description),
+			Type:         types.StringValue(role.Type),
+			PermissionId: types.StringValue(role.Permissions[0].PermissionId),
+		}
+		state.Roles = append(state.Roles, roleList)
+	}
+	state.Id = types.StringValue("placeholder")
 	// Set state
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

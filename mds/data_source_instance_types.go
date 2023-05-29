@@ -20,11 +20,12 @@ var (
 type instanceTypesDataSourceModel struct {
 	InstanceTypes []instanceTypesModel `tfsdk:"instance_types"`
 	ServiceType   types.String         `tfsdk:"service_type"`
+	Id            types.String         `tfsdk:"id"`
 }
 
 // instanceTypesModel maps coffees schema data.
 type instanceTypesModel struct {
-	ID           types.String               `tfsdk:"id"`
+	ID           string                     `tfsdk:"id"`
 	InstanceSize types.String               `tfsdk:"instance_size"`
 	Description  types.String               `tfsdk:"instance_size_description"`
 	ServiceType  types.String               `tfsdk:"service_type"`
@@ -59,6 +60,10 @@ func (d *instanceTypesDataSource) Metadata(_ context.Context, req datasource.Met
 func (d *instanceTypesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
+			},
 			"service_type": schema.StringAttribute{
 				Required: true,
 			},
@@ -125,7 +130,7 @@ func (d *instanceTypesDataSource) Read(ctx context.Context, req datasource.ReadR
 	// Map response body to model
 	for _, instanceType := range serviceInstanceTypes.InstanceTypes {
 		instanceTypesState := instanceTypesModel{
-			ID:           types.StringValue(instanceType.ID),
+			ID:           instanceType.ID,
 			InstanceSize: types.StringValue(instanceType.InstanceSize),
 			Description:  types.StringValue(instanceType.SizeDescription),
 			ServiceType:  types.StringValue(instanceType.ServiceType),
@@ -141,6 +146,7 @@ func (d *instanceTypesDataSource) Read(ctx context.Context, req datasource.ReadR
 		state.InstanceTypes = append(state.InstanceTypes, instanceTypesState)
 	}
 
+	state.Id = types.StringValue("placeholder")
 	// Set state
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

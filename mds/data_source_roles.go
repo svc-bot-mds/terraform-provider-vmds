@@ -18,6 +18,7 @@ var (
 // rolesDataSourceModel maps the data source schema data.
 type rolesDataSourceModel struct {
 	Roles []rolesModel `tfsdk:"roles"`
+	Id    types.String `tfsdk:"id"`
 }
 
 // rolesModel maps role schema data.
@@ -46,6 +47,10 @@ func (d *rolesDatasource) Metadata(_ context.Context, req datasource.MetadataReq
 func (d *rolesDatasource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
+			},
 			"roles": schema.ListNestedAttribute{
 				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
@@ -93,6 +98,7 @@ func (d *rolesDatasource) Read(ctx context.Context, req datasource.ReadRequest, 
 		}
 		state.Roles = append(state.Roles, roleList)
 	}
+	state.Id = types.StringValue("placeholder")
 	// Set state
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

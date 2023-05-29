@@ -15,15 +15,16 @@ locals {
   provider = "aws"
 }
 
-data "vmds_regions" "all" {
+// pass valid data with respect to the instance type selected
+data "vmds_regions" "available_regions" {
   cpu                  = "1"
   cloud_provider       = local.provider
   memory               = "4Gi"
   storage              = "4Gi"
   node_count           = "1"
-  dedicated_data_plane = false
+  dedicated_data_plane = true
 }
 
 output "regions_data" {
-  value = data.vmds_regions.all
+  value = data.vmds_regions.available_regions
 }

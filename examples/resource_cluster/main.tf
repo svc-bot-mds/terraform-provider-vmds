@@ -38,6 +38,11 @@ resource "vmds_cluster" "test" {
   network_policy_ids = data.vmds_network_policies.create.policies[*].id
   tags               = ["mds-tf", "example", "new-tag"]
   timeouts           = {
-    create = "10m"
+    create = "1m"
+    delete = "1m"
+  }
+  // non editable fields
+  lifecycle {
+    ignore_changes = [instance_size, name, cloud_provider, region,service_type]
   }
 }

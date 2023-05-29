@@ -19,6 +19,7 @@ var (
 // instanceTypesDataSourceModel maps the data source schema data.
 type mdsPoliciesDatasourceModel struct {
 	Policies []mdsPoliciesModel `tfsdk:"policies"`
+	Id       types.String       `tfsdk:"id"`
 	Names    types.List         `tfsdk:"names"`
 }
 
@@ -47,6 +48,10 @@ func (d *mdsPoliciesDatasource) Metadata(_ context.Context, req datasource.Metad
 func (d *mdsPoliciesDatasource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
+			},
 			"names": schema.ListAttribute{
 				Optional:    true,
 				ElementType: types.StringType,
@@ -98,6 +103,7 @@ func (d *mdsPoliciesDatasource) Read(ctx context.Context, req datasource.ReadReq
 		state.Policies = append(state.Policies, policy)
 	}
 
+	state.Id = types.StringValue("placeholder")
 	// Set state
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

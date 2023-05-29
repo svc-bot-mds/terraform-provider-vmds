@@ -17,6 +17,7 @@ var (
 
 // instanceTypesDataSourceModel maps the data source schema data.
 type serviceAccountsDatasourceModel struct {
+	Id              types.String          `tfsdk:"id"`
 	ServiceAccounts []serviceAccountModel `tfsdk:"service_accounts"`
 }
 
@@ -46,6 +47,10 @@ func (d *serviceAccountsDatasource) Metadata(_ context.Context, req datasource.M
 func (d *serviceAccountsDatasource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
+			},
 			"service_accounts": schema.ListNestedAttribute{
 				Computed: true,
 				Optional: true,
@@ -93,6 +98,7 @@ func (d *serviceAccountsDatasource) Read(ctx context.Context, req datasource.Rea
 		tflog.Debug(ctx, "converted service Account dto", map[string]interface{}{"dto": serviceAccount})
 		state.ServiceAccounts = append(state.ServiceAccounts, serviceAccount)
 	}
+	state.Id = types.StringValue("placeholder")
 	// Set state
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

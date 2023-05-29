@@ -20,6 +20,7 @@ var (
 type networkPoliciesDataSourceModel struct {
 	Policies []networkPoliciesModel `tfsdk:"policies"`
 	Names    []string               `tfsdk:"names"`
+	Id       types.String           `tfsdk:"id"`
 }
 
 // instanceTypesModel maps coffees schema data.
@@ -50,6 +51,10 @@ func (d *networkPoliciesDatasource) Schema(_ context.Context, _ datasource.Schem
 			"names": schema.SetAttribute{
 				Optional:    true,
 				ElementType: types.StringType,
+			},
+			"id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
 			},
 			"policies": schema.ListNestedAttribute{
 				Computed: true,
@@ -99,6 +104,7 @@ func (d *networkPoliciesDatasource) Read(ctx context.Context, req datasource.Rea
 		state.Policies = append(state.Policies, networkPolicy)
 	}
 
+	state.Id = types.StringValue("placeholder")
 	// Set state
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

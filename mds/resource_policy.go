@@ -17,6 +17,8 @@ import (
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
 	customer_metadata "github.com/svc-bot-mds/terraform-provider-vmds/client/mds/customer-metadata"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/model"
+	"regexp"
+	"sort"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -104,14 +106,17 @@ func (r *policyResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"role": schema.StringAttribute{
-							Required: true,
+							MarkdownDescription: "One or more of (monitoring,write,management,policymaker,read,configure). Please make use of `datasource_service_roles` to get roles.",
+							Required:            true,
 						},
 						"resource": schema.StringAttribute{
-							Required: true,
+							MarkdownDescription: "One or the cluster/instance name. Please make use of `datasource_clusters` to get resource.",
+							Required:            true,
 						},
 						"permissions": schema.SetAttribute{
-							Required:    true,
-							ElementType: types.StringType,
+							MarkdownDescription: "One or more of (monitoring,write,management,policymaker,read,configure). Please make use of `datasource_service_roles` to get roles.",
+							Required:            true,
+							ElementType:         types.StringType,
 						},
 					},
 				},
@@ -170,6 +175,7 @@ func (r *policyResource) Create(ctx context.Context, req resource.CreateRequest,
 			}
 			roleId.Permissions.ElementsAs(ctx, &rolesReq[i].Permissions, true)
 		}
+		sort.Slice(rolesReq, func(i, j int) bool { return rolesReq[i].Role < rolesReq[j].Role })
 		policyRequest.PermissionsSpec = rolesReq
 	} else {
 		networkSpec := &customer_metadata.MdsNetworkSpec{
@@ -360,6 +366,12 @@ func saveFromPolicyResponse(ctx *context.Context, diagnostics *diag.Diagnostics,
 		if diagnostics.Append(diags...); diagnostics.HasError() {
 			return 1
 		}
+
+		sort.Slice(tfPermissionSpecModel, func(i, j int) bool {
+			roleI := tfPermissionSpecModel[i].Role.ValueString()
+			roleJ := tfPermissionSpecModel[j].Role.ValueString()
+			return roleI < roleJ
+		})
 		state.PermissionSpecs = tfPermissionSpecModel
 	} else {
 		tfNetworkSpecModels := make([]*NetworkSpecModel, len(policy.NetworkSpec))
@@ -394,7 +406,6 @@ func convertFromPermissionSpecDto(ctx *context.Context, roles []*model.MdsPermis
 		permissions, _ := types.SetValueFrom(*ctx, types.StringType, permissionSpec.Permissions)
 		tfPermissionSpecModels[i].Permissions = permissions
 	}
-
 	return tfPermissionSpecModels, nil
 }
 
@@ -408,13 +419,26 @@ func (r *policyResource) ValidateConfig(ctx context.Context, req resource.Valida
 
 	if (plan.NetworkSpec == nil && len(plan.PermissionSpecs) > 0 && plan.ServiceType.ValueString() == policy_type.RABBITMQ) ||
 		plan.NetworkSpec != nil && len(plan.PermissionSpecs) <= 0 && plan.ServiceType.ValueString() == policy_type.NETWORK {
-		return
-	}
+		if plan.NetworkSpec != nil && len(plan.PermissionSpecs) <= 0 && plan.ServiceType.ValueString() == policy_type.NETWORK {
+			const pattern = `^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))$`
+			regex := regexp.MustCompile(pattern)
 
-	if plan.ServiceType.ValueString() == policy_type.RABBITMQ {
-		resp.Diagnostics.AddError("Validation Failed", "Please pass only permission_specs while creating RabbitMQ Policy.")
+			// Check if the value matches the pattern
+			if !regex.MatchString(plan.NetworkSpec.Cidr.ValueString()) {
+				resp.Diagnostics.AddError("Validation Failed", "CIDR form is invalid.( Ex. 10.22.55.0/24 )")
+
+			}
+		} else {
+			return
+		}
+
 	} else {
-		resp.Diagnostics.AddError("Validation Failed", "Please pass only network_spec while creating Network Policy")
+
+		if plan.ServiceType.ValueString() == policy_type.RABBITMQ {
+			resp.Diagnostics.AddError("Validation Failed", "Please pass only permission_specs while creating RabbitMQ Policy.")
+		} else {
+			resp.Diagnostics.AddError("Validation Failed", "Please pass only network_spec while creating Network Policy")
+		}
 	}
 
 }
