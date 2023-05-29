@@ -13,10 +13,10 @@ func TestMdsClusterMetadataSource(t *testing.T) {
 			// Read testing
 			{
 				Config: providerConfig + `data "vmds_cluster_metadata" "metadata" {
-    										id = "6465f3ae265b393b4e42e9bd"
+    										id = "dummyid"
   				}`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.vmds_cluster_metadata.metadata", "id", "6465f3ae265b393b4e42e9bd"),
+					resource.TestCheckResourceAttr("data.vmds_cluster_metadata.metadata", "id", "dummmyid"),
 					resource.TestCheckResourceAttr("data.vmds_cluster_metadata.metadata", "name", "test"),
 					resource.TestCheckResourceAttr("data.vmds_cluster_metadata.metadata", "provider_name", "aws"),
 					resource.TestCheckResourceAttr("data.vmds_cluster_metadata.metadata", "service_type", "RABBITMQ"),
