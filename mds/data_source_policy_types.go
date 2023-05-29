@@ -16,7 +16,8 @@ var (
 )
 
 type policyTypesDataSourceModel struct {
-	PolicyTypes []string `tfsdk:"policy_types"`
+	Id          types.String `tfsdk:"id"`
+	PolicyTypes []string     `tfsdk:"policy_types"`
 }
 
 func NewPolicyTypesDataSource() datasource.DataSource {
@@ -35,6 +36,10 @@ func (d *policyTypesDataSource) Metadata(_ context.Context, req datasource.Metad
 func (d *policyTypesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
+			},
 			"policy_types": schema.SetAttribute{
 				Computed:    true,
 				ElementType: types.StringType,
@@ -68,7 +73,7 @@ func (d *policyTypesDataSource) Read(ctx context.Context, req datasource.ReadReq
 		)
 		return
 	}
-
+	state.Id = types.StringValue("placeholder")
 	state.PolicyTypes = append(state.PolicyTypes, typesList...)
 	// Set state
 	diags := resp.State.Set(ctx, &state)

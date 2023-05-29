@@ -17,7 +17,8 @@ var (
 
 // instanceTypesDataSourceModel maps the data source schema data.
 type usersDataSourceModel struct {
-	Users []userModel `tfsdk:"users"`
+	Id    types.String `tfsdk:"id"`
+	Users []userModel  `tfsdk:"users"`
 }
 
 type userModel struct {
@@ -45,6 +46,10 @@ func (d *usersDatasource) Metadata(_ context.Context, req datasource.MetadataReq
 func (d *usersDatasource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
+			},
 			"users": schema.ListNestedAttribute{
 				Computed: true,
 				Optional: true,
@@ -93,7 +98,7 @@ func (d *usersDatasource) Read(ctx context.Context, req datasource.ReadRequest, 
 		tflog.Debug(ctx, "converted userAccount dto", map[string]interface{}{"dto": user})
 		state.Users = append(state.Users, user)
 	}
-
+	state.Id = types.StringValue("placeholder")
 	// Set state
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

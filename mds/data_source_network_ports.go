@@ -16,6 +16,7 @@ var (
 // networkPortsDatasource maps the datasource schema
 type networkPortsDataSourceModel struct {
 	NetworkPorts []networkPortsModel `tfsdk:"network_ports"`
+	Id           types.String        `tfsdk:"id"`
 }
 
 type networkPortsModel struct {
@@ -42,6 +43,10 @@ func (d *networkPortsDataSource) Metadata(_ context.Context, req datasource.Meta
 func (d *networkPortsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
+			},
 			"network_ports": schema.ListNestedAttribute{
 				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
@@ -92,6 +97,7 @@ func (d *networkPortsDataSource) Read(ctx context.Context, req datasource.ReadRe
 		state.NetworkPorts = append(state.NetworkPorts, networkPortsState)
 	}
 
+	state.Id = types.StringValue("placeholder")
 	// Set state
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

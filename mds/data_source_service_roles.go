@@ -18,6 +18,7 @@ var (
 
 // ServiceRolesDataSourceModel maps the data source schema data.
 type ServiceRolesDataSourceModel struct {
+	Id    types.String        `tfsdk:"id"`
 	Roles []ServiceRolesModel `tfsdk:"roles"`
 	Type  types.String        `tfsdk:"type"`
 }
@@ -51,6 +52,10 @@ func (d *serviceRolesDatasource) Metadata(_ context.Context, req datasource.Meta
 func (d *serviceRolesDatasource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
+			},
 			"type": schema.StringAttribute{
 				Required: true,
 			},
@@ -109,7 +114,7 @@ func (d *serviceRolesDatasource) Read(ctx context.Context, req datasource.ReadRe
 		}
 		state.Roles = append(state.Roles, roleList)
 	}
-
+	state.Id = types.StringValue("placeholder")
 	// Set state
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

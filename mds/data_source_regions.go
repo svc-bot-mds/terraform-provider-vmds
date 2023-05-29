@@ -24,6 +24,7 @@ type regionsDataSourceModel struct {
 	NodeCount          types.String   `tfsdk:"node_count"`
 	Regions            []RegionsModel `tfsdk:"regions"`
 	DedicatedDataPlane types.Bool     `tfsdk:"dedicated_data_plane"`
+	Id                 types.String   `tfsdk:"id"`
 }
 
 type RegionsModel struct {
@@ -65,6 +66,10 @@ func (d *regionsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 			},
 			"dedicated_data_plane": schema.BoolAttribute{
 				Optional: true,
+			},
+			"id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
 			},
 			"regions": schema.ListNestedAttribute{
 				Computed: true,
@@ -124,7 +129,7 @@ func (d *regionsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	if saveRegionsToState(&ctx, &resp.Diagnostics, &state, regions) != 0 {
 		return
 	}
-
+	state.Id = types.StringValue("placeholder")
 	// Set state
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

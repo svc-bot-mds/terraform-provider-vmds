@@ -411,8 +411,8 @@ func (r *clusterResource) Delete(ctx context.Context, request resource.DeleteReq
 	}
 
 	for {
-		time.Sleep(10 * time.Second)
-		if _, err := r.client.Controller.GetMdsCluster(state.ID.ValueString()); err != nil {
+		response, err := r.client.Controller.GetMdsCluster(state.ID.ValueString())
+		if err != nil {
 			var apiError core.ApiError
 			if errors.As(err, &apiError) && apiError.StatusCode == http.StatusNotFound {
 				break
@@ -420,6 +420,10 @@ func (r *clusterResource) Delete(ctx context.Context, request resource.DeleteReq
 			resp.Diagnostics.AddError("Fetching cluster",
 				fmt.Sprintf("Could not fetch cluster by id [%v], unexpected error: %s", state.ID, err.Error()),
 			)
+			return
+		}
+		if response.Status == "DELETE_IN_PROGRESS" || response.Status == "DELETED" {
+
 			return
 		}
 	}
