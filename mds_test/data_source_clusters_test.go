@@ -1,9 +1,9 @@
 package mds_test
 
 import (
-	"testing"
-
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/svc-bot-mds/terraform-provider-vmds/constants/common"
+	"testing"
 )
 
 func TestMdsClustersDataSource(t *testing.T) {
@@ -20,7 +20,7 @@ func TestMdsClustersDataSource(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.vmds_clusters.cluster_list", "service_type"),
 					resource.TestCheckResourceAttr("data.vmds_clusters.cluster_list", "clusters.#", "26"),
 					resource.TestCheckResourceAttr("data.vmds_clusters.cluster_list", "clusters.0.name", "audit-test-dnd"),
-					resource.TestCheckResourceAttr("data.vmds_clusters.cluster_list", "id", "placeholder"),
+					resource.TestCheckResourceAttr("data.vmds_clusters.cluster_list", "id", common.DataSource+common.ClusterId),
 				),
 			},
 		},

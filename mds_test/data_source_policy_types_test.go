@@ -1,6 +1,7 @@
 package mds_test
 
 import (
+	"github.com/svc-bot-mds/terraform-provider-vmds/constants/common"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -19,7 +20,7 @@ func TestMdsPolicyTypesDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vmds_policy_types.typesList", "policy_types.#", "2"),
 					resource.TestCheckResourceAttr("data.vmds_policy_types.typesList", "policy_types.0", "NETWORK"),
 					resource.TestCheckResourceAttr("data.vmds_policy_types.typesList", "policy_types.1", "RABBITMQ"),
-					resource.TestCheckResourceAttr("data.vmds_policy_types.typesList", "id", "placeholder"),
+					resource.TestCheckResourceAttr("data.vmds_policy_types.typesList", "id", common.DataSource+common.PolicyTypesId),
 				),
 			},
 		},

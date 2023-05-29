@@ -1,6 +1,7 @@
 package mds_test
 
 import (
+	"github.com/svc-bot-mds/terraform-provider-vmds/constants/common"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -22,7 +23,7 @@ func TestMdsServiceRolesDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vmds_service_roles.roles", "roles.0.name", "write"),
 					resource.TestCheckResourceAttr("data.vmds_service_roles.roles", "roles.0.role_id", "StgManagedDataService:RMQWrite"),
 					// Verify placeholder id attribute
-					resource.TestCheckResourceAttr("data.vmds_service_roles.roles", "id", "placeholder"),
+					resource.TestCheckResourceAttr("data.vmds_service_roles.roles", "id", common.DataSource+common.ServiceRolesId),
 				),
 			},
 		},

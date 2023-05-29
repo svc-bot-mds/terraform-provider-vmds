@@ -1,6 +1,7 @@
 package mds_test
 
 import (
+	"github.com/svc-bot-mds/terraform-provider-vmds/constants/common"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -30,7 +31,7 @@ func TestMdsRegionsDataSource(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.vmds_regions.available_regions", "storage"),
 					resource.TestCheckResourceAttr("data.vmds_regions.available_regions", "regions.#", "1"),
 					resource.TestCheckResourceAttr("data.vmds_regions.available_regions", "regions.0.name", "eu-west-1"),
-					resource.TestCheckResourceAttr("data.vmds_regions.available_regions", "id", "placeholder"),
+					resource.TestCheckResourceAttr("data.vmds_regions.available_regions", "id", common.DataSource+common.RegionsId),
 				),
 			},
 		},

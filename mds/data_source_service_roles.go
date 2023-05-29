@@ -9,6 +9,7 @@ import (
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/constants/role_type"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
 	service_metadata "github.com/svc-bot-mds/terraform-provider-vmds/client/mds/service-metadata"
+	"github.com/svc-bot-mds/terraform-provider-vmds/constants/common"
 )
 
 var (
@@ -114,7 +115,7 @@ func (d *serviceRolesDatasource) Read(ctx context.Context, req datasource.ReadRe
 		}
 		state.Roles = append(state.Roles, roleList)
 	}
-	state.Id = types.StringValue("placeholder")
+	state.Id = types.StringValue(common.DataSource + common.ServiceRolesId)
 	// Set state
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

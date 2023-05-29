@@ -1,6 +1,7 @@
 package mds_test
 
 import (
+	"github.com/svc-bot-mds/terraform-provider-vmds/constants/common"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -18,7 +19,7 @@ func TestMdsPoliciesDataSource(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.vmds_policies.policies", "id"),
 					resource.TestCheckResourceAttr("data.vmds_policies.policies", "policies.#", "27"),
 					resource.TestCheckResourceAttr("data.vmds_policies.policies", "policies.0.name", "test-tfddwqe"),
-					resource.TestCheckResourceAttr("data.vmds_policies.policies", "id", "placeholder"),
+					resource.TestCheckResourceAttr("data.vmds_policies.policies", "id", common.DataSource+common.PoliciesId),
 				),
 			},
 		},
