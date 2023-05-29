@@ -26,8 +26,8 @@ import (
 )
 
 const (
-	defaultCreateTimeout = 3 * time.Minute
-	defaultDeleteTimeout = 1 * time.Minute
+	defaultCreateTimeout = 20 * time.Minute
+	defaultDeleteTimeout = 5 * time.Minute
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -411,20 +411,18 @@ func (r *clusterResource) Delete(ctx context.Context, request resource.DeleteReq
 	}
 
 	for {
-		response, err := r.client.Controller.GetMdsCluster(state.ID.ValueString())
-		if err != nil {
-			var apiError core.ApiError
-			if errors.As(err, &apiError) && apiError.StatusCode == http.StatusNotFound {
-				break
+		time.Sleep(10 * time.Second)
+		if _, err := r.client.Controller.GetMdsCluster(state.ID.ValueString()); err != nil {
+			if err != nil {
+				var apiError core.ApiError
+				if errors.As(err, &apiError) && apiError.StatusCode == http.StatusNotFound {
+					break
+				}
+				resp.Diagnostics.AddError("Fetching cluster",
+					fmt.Sprintf("Could not fetch cluster by id [%v], unexpected error: %s", state.ID, err.Error()),
+				)
+				return
 			}
-			resp.Diagnostics.AddError("Fetching cluster",
-				fmt.Sprintf("Could not fetch cluster by id [%v], unexpected error: %s", state.ID, err.Error()),
-			)
-			return
-		}
-		if response.Status == "DELETE_IN_PROGRESS" || response.Status == "DELETED" {
-
-			return
 		}
 	}
 

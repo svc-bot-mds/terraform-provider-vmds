@@ -8,6 +8,7 @@ import (
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/constants/service_type"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds/controller"
+	"github.com/svc-bot-mds/terraform-provider-vmds/constants/common"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -146,7 +147,7 @@ func (d *instanceTypesDataSource) Read(ctx context.Context, req datasource.ReadR
 		state.InstanceTypes = append(state.InstanceTypes, instanceTypesState)
 	}
 
-	state.Id = types.StringValue("placeholder")
+	state.Id = types.StringValue(common.DataSource + common.InstanceTypesId)
 	// Set state
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

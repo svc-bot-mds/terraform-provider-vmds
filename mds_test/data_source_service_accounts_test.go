@@ -1,6 +1,7 @@
 package mds_test
 
 import (
+	"github.com/svc-bot-mds/terraform-provider-vmds/constants/common"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -20,7 +21,7 @@ func TestMdsServiceAccountsDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vmds_service_accounts.service_accounts", "service_accounts.0.name", "test-svc-tf-update1"),
 					resource.TestCheckResourceAttr("data.vmds_service_accounts.service_accounts", "service_accounts.0.status", "ACTIVE"),
 					// Verify placeholder id attribute
-					resource.TestCheckResourceAttr("data.vmds_service_accounts.service_accounts", "id", "placeholder"),
+					resource.TestCheckResourceAttr("data.vmds_service_accounts.service_accounts", "id", common.DataSource+common.ServiceAccountsId),
 				),
 			},
 		},

@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
+	"github.com/svc-bot-mds/terraform-provider-vmds/constants/common"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -73,7 +74,7 @@ func (d *policyTypesDataSource) Read(ctx context.Context, req datasource.ReadReq
 		)
 		return
 	}
-	state.Id = types.StringValue("placeholder")
+	state.Id = types.StringValue(common.DataSource + common.PolicyTypesId)
 	state.PolicyTypes = append(state.PolicyTypes, typesList...)
 	// Set state
 	diags := resp.State.Set(ctx, &state)

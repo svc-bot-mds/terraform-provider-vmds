@@ -1,6 +1,7 @@
 package mds_test
 
 import (
+	"github.com/svc-bot-mds/terraform-provider-vmds/constants/common"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -19,7 +20,7 @@ func TestMdsNetworkPortsDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vmds_network_ports.all", "network_ports.#", "5"),
 					resource.TestCheckResourceAttr("data.vmds_network_ports.all", "network_ports.0.name", "Metrics"),
 					resource.TestCheckResourceAttr("data.vmds_network_ports.all", "network_ports.0.port", "443"),
-					resource.TestCheckResourceAttr("data.vmds_network_ports.all", "id", "placeholder"),
+					resource.TestCheckResourceAttr("data.vmds_network_ports.all", "id", common.DataSource+common.NetworkPortsId),
 				),
 			},
 		},

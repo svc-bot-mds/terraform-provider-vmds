@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
+	"github.com/svc-bot-mds/terraform-provider-vmds/constants/common"
 )
 
 var (
@@ -97,7 +98,7 @@ func (d *networkPortsDataSource) Read(ctx context.Context, req datasource.ReadRe
 		state.NetworkPorts = append(state.NetworkPorts, networkPortsState)
 	}
 
-	state.Id = types.StringValue("placeholder")
+	state.Id = types.StringValue(common.DataSource + common.NetworkPortsId)
 	// Set state
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

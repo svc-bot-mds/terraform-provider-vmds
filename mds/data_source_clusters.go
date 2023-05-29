@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds/controller"
+	"github.com/svc-bot-mds/terraform-provider-vmds/constants/common"
 )
 
 var (
@@ -99,7 +100,7 @@ func (d *clustersDatasource) Read(ctx context.Context, req datasource.ReadReques
 		state.Clusters = append(state.Clusters, cluster)
 	}
 
-	state.ID = types.StringValue("placeholder")
+	state.ID = types.StringValue(common.DataSource + common.ClusterId)
 	// Set state
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

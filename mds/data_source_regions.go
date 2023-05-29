@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
 	infra_connector "github.com/svc-bot-mds/terraform-provider-vmds/client/mds/infra-connector"
+	"github.com/svc-bot-mds/terraform-provider-vmds/constants/common"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -129,7 +130,7 @@ func (d *regionsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	if saveRegionsToState(&ctx, &resp.Diagnostics, &state, regions) != 0 {
 		return
 	}
-	state.Id = types.StringValue("placeholder")
+	state.Id = types.StringValue(common.DataSource + common.RegionsId)
 	// Set state
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

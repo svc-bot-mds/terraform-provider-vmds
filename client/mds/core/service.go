@@ -40,11 +40,9 @@ func (r *Root) Get(url *string, queryModel interface{}, dest interface{}) ([]byt
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println(pairs)
 		req.URL.RawQuery = utils.ProcessAsQuery(req.URL.Query(), &pairs).Encode()
 	}
 
-	fmt.Println(req.URL.String())
 	body, err := r.doRequest(req)
 	if err != nil {
 		return nil, err

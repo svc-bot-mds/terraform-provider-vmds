@@ -9,6 +9,7 @@ import (
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/constants/policy_type"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
 	customer_metadata "github.com/svc-bot-mds/terraform-provider-vmds/client/mds/customer-metadata"
+	"github.com/svc-bot-mds/terraform-provider-vmds/constants/common"
 )
 
 var (
@@ -103,7 +104,7 @@ func (d *mdsPoliciesDatasource) Read(ctx context.Context, req datasource.ReadReq
 		state.Policies = append(state.Policies, policy)
 	}
 
-	state.Id = types.StringValue("placeholder")
+	state.Id = types.StringValue(common.DataSource + common.PoliciesId)
 	// Set state
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
