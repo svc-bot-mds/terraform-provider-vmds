@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     vmds = {
-      source = "vmware/managed-data-services"
+      source = "svc-bot-mds/vmds"
     }
   }
 }

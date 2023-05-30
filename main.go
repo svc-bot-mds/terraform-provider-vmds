@@ -9,7 +9,7 @@ import (
 
 func main() {
 	err := providerserver.Serve(context.Background(), mds.New, providerserver.ServeOpts{
-		Address: "vmware/managed-data-services",
+		Address: "svc-bot-mds/vmds",
 	})
 	if err != nil {
 		return
