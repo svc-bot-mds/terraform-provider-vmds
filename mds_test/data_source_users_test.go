@@ -18,7 +18,7 @@ func TestMdsUsersDataSource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.vmds_users.users", "id"),
 					resource.TestCheckResourceAttr("data.vmds_users.users", "users.#", "10"),
-					resource.TestCheckResourceAttr("data.vmds_users.users", "users.0.email", "ptendolkar@vmware.com"),
+					resource.TestCheckResourceAttr("data.vmds_users.users", "users.0.email", "developer-tf-user@vmware.com"),
 					resource.TestCheckResourceAttr("data.vmds_users.users", "id", common.DataSource+common.UsersId),
 				),
 			},

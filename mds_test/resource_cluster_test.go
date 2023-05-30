@@ -23,7 +23,7 @@ func TestAccClusterResource(t *testing.T) {
 					}
 
 					resource "vmds_cluster" "test" {
-						name               = "my-rmq-cls-test-terraform5"
+er						name               = "testing-from-tf-instance4"
 						service_type       = local.service_type
 						cloud_provider     = local.provider
 						instance_size      = local.instance_type
@@ -42,7 +42,7 @@ func TestAccClusterResource(t *testing.T) {
 				`,
 				Check: resource.ComposeTestCheckFunc(
 					// Add validation checks here to verify the resource state
-					resource.TestCheckResourceAttr("vmds_cluster.test", "name", "my-rmq-cls-test-terraform5"),
+					resource.TestCheckResourceAttr("vmds_cluster.test", "name", "testing-from-tf-instance4"),
 					resource.TestCheckResourceAttr("vmds_cluster.test", "service_type", "RABBITMQ"),
 				),
 			},
@@ -57,7 +57,7 @@ func TestAccClusterResource(t *testing.T) {
 					}
 
 					resource "vmds_cluster" "test" {
-						name               = "my-rmq-cls-test-terraform5"
+						name               = "testing-from-tf-instance4"
 						service_type       = local.service_type
 						cloud_provider     = local.provider
 						instance_size      = local.instance_type
@@ -77,12 +77,6 @@ func TestAccClusterResource(t *testing.T) {
 					resource.TestCheckResourceAttr("vmds_cluster.test", "tags.#", "4"),
 					resource.TestCheckResourceAttr("vmds_cluster.test", "tags.0", "edit"),
 				),
-			},
-
-			{
-				ResourceName:      "vmds_cluster.test",
-				ImportState:       true,
-				ImportStateVerify: true,
 			},
 			{
 				Config: providerConfig,

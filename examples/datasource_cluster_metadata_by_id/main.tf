@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     vmds = {
-      source = "hashicorp.com/edu/vmds"
+      source = "svc-bot-mds/vmds"
     }
   }
 }

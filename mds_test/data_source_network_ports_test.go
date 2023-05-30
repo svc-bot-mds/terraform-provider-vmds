@@ -19,7 +19,7 @@ func TestMdsNetworkPortsDataSource(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.vmds_network_ports.all", "id"),
 					resource.TestCheckResourceAttr("data.vmds_network_ports.all", "network_ports.#", "5"),
 					resource.TestCheckResourceAttr("data.vmds_network_ports.all", "network_ports.0.name", "Metrics"),
-					resource.TestCheckResourceAttr("data.vmds_network_ports.all", "network_ports.0.port", "443"),
+					resource.TestCheckResourceAttr("data.vmds_network_ports.all", "network_ports.0.port", "4455"),
 					resource.TestCheckResourceAttr("data.vmds_network_ports.all", "id", common.DataSource+common.NetworkPortsId),
 				),
 			},
