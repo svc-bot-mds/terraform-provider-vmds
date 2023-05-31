@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -101,29 +102,32 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Some attributes only used one-time for creation are: `dedicated`, `network_policy_ids`." +
-			"Changing only `tags` is supported at the moment. If you wish to update network policies associated with it, please refer resource: " +
-			"`mds_cluster_network_policies_association`",
+			"\nChanging only `tags` is supported at the moment. If you wish to update network policies associated with it, please refer resource: " +
+			"`vmds_cluster_network_policies_association`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Computed: true,
+				Description: "ID of the cluster.",
+				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"org_id": schema.StringAttribute{
-				Computed: true,
+				Description: "ID of the Org which owns the cluster.",
+				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"name": schema.StringAttribute{
-				Required: true,
+				Description: "Name of the cluster.",
+				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"service_type": schema.StringAttribute{
-				MarkdownDescription: "Type of MDS Cluster to be created. Currently supporting: `RABBITMQ`",
+				MarkdownDescription: fmt.Sprintf("Type of MDS Cluster to be created. Supported values: %s .", supportedServiceTypesMarkdown()),
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString(service_type.RABBITMQ),
@@ -132,15 +136,16 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				},
 			},
 			"cloud_provider": schema.StringAttribute{
-				MarkdownDescription: "Short-code of provider to use for data-plane. Ex: 'aws', 'gcp'...",
+				MarkdownDescription: "Short-code of provider to use for data-plane. Ex: `aws`, `gcp` .",
 				Required:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"instance_size": schema.StringAttribute{
-				MarkdownDescription: "Size of instance. Ex: `XX-SMALL`, `X-SMALL`, `SMALL`, `LARGE`, `XX-LARGE`",
-				Required:            true,
+				MarkdownDescription: "Size of instance. Supported values are: `XX-SMALL`, `X-SMALL`, `SMALL`, `LARGE`, `XX-LARGE`." +
+					"\nPlease make use of datasource `vmds_network_ports` to decide on a size based on resources it requires.",
+				Required: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -154,32 +159,42 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				},
 			},
 			"dedicated": schema.BoolAttribute{
-				Optional: true,
-				Computed: false,
+				Description: "If present and set to `true`, the cluster will get deployed on a dedicated data-plane in current Org.",
+				Optional:    true,
+				Computed:    false,
 			},
 			"tags": schema.SetAttribute{
+				Description: "Set of tags or labels to categorise the cluster.",
 				Optional:    true,
 				ElementType: types.StringType,
 			},
 			"network_policy_ids": schema.SetAttribute{
+				Description: "List of network policies to attach to the cluster.",
 				Optional:    true,
 				Computed:    false,
 				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"status": schema.StringAttribute{
-				Computed: true,
+				Description: "Status of the cluster.",
+				Computed:    true,
 			},
 			"data_plane_id": schema.StringAttribute{
-				Computed: true,
+				Description: "ID of the data-plane where the cluster is running.",
+				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"last_updated": schema.StringAttribute{
-				Computed: true,
+				Description: "Time when the cluster was last modified.",
+				Computed:    true,
 			},
 			"created": schema.StringAttribute{
-				Computed: true,
+				Description: "Creation time of the cluster.",
+				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -189,6 +204,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Delete: true,
 			}),
 			"metadata": schema.SingleNestedAttribute{
+				Description: "Additional info of the cluster.",
 				CustomType: types.ObjectType{
 					AttrTypes: map[string]attr.Type{
 						"manager_uri":    types.StringType,
@@ -202,17 +218,19 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 					objectplanmodifier.UseStateForUnknown(),
 				},
 				Computed: true,
-				Optional: true,
 				Attributes: map[string]schema.Attribute{
 					"manager_uri": schema.StringAttribute{
-						Computed: true,
+						MarkdownDescription: "URI of the manager. Specific to `RABBITMQ` service.",
+						Computed:            true,
 					},
 					"connection_uri": schema.StringAttribute{
-						Computed: true,
+						MarkdownDescription: "Connection URI to the instance. Specific to `RABBITMQ` service.",
+						Computed:            true,
 					},
 					"metrics_endpoints": schema.ListAttribute{
-						Computed:    true,
-						ElementType: types.StringType,
+						MarkdownDescription: "List of metrics endpoints exposed on the instance. Specific to `RABBITMQ` service.",
+						Computed:            true,
+						ElementType:         types.StringType,
 					},
 				},
 			},
@@ -450,22 +468,26 @@ func saveFromResponse(ctx *context.Context, diagnostics *diag.Diagnostics, state
 	tflog.Info(*ctx, "trying to save mdsMetadata", map[string]interface{}{
 		"obj": cluster.Metadata,
 	})
+
+	metadataModel := clusterMetadataModel{
+		ManagerUri:       types.StringValue(""),
+		ConnectionUri:    types.StringValue(""),
+		MetricsEndpoints: types.ListUnknown(types.StringType),
+	}
 	if cluster.Metadata != nil {
 		list, diags := types.ListValueFrom(*ctx, types.StringType, cluster.Metadata.MetricsEndpoints)
 		if diagnostics.Append(diags...); diagnostics.HasError() {
 			return 1
 		}
-		metadataModel := clusterMetadataModel{
-			ManagerUri:       types.StringValue(cluster.Metadata.ManagerUri),
-			ConnectionUri:    types.StringValue(cluster.Metadata.ConnectionUri),
-			MetricsEndpoints: list,
-		}
-		metadataObject, diags := types.ObjectValueFrom(*ctx, state.Metadata.AttributeTypes(*ctx), metadataModel)
-		if diagnostics.Append(diags...); diagnostics.HasError() {
-			return 1
-		}
-		state.Metadata = metadataObject
+		metadataModel.ManagerUri = types.StringValue(cluster.Metadata.ManagerUri)
+		metadataModel.ConnectionUri = types.StringValue(cluster.Metadata.ConnectionUri)
+		metadataModel.MetricsEndpoints = list
 	}
+	metadataObject, diags := types.ObjectValueFrom(*ctx, state.Metadata.AttributeTypes(*ctx), metadataModel)
+	if diagnostics.Append(diags...); diagnostics.HasError() {
+		return 1
+	}
+	state.Metadata = metadataObject
 
 	list, diags := types.SetValueFrom(*ctx, types.StringType, cluster.Tags)
 	if diagnostics.Append(diags...); diagnostics.HasError() {

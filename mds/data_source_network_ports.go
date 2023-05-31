@@ -43,26 +43,32 @@ func (d *networkPortsDataSource) Metadata(_ context.Context, req datasource.Meta
 // Schema defines the schema for the data source.
 func (d *networkPortsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Used to fetch all network ports supported for services on MDS.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
+				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource.",
 			},
 			"network_ports": schema.ListNestedAttribute{
-				Computed: true,
+				Description: "List of network ports.",
+				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
-							Computed: true,
+							Description: "ID of the port.",
+							Computed:    true,
 						},
 						"name": schema.StringAttribute{
-							Computed: true,
+							Description: "Name of the port.",
+							Computed:    true,
 						},
 						"description": schema.StringAttribute{
-							Computed: true,
+							Description: "Description of the port.",
+							Computed:    true,
 						},
 						"port": schema.Int64Attribute{
-							Computed: true,
+							Description: "The port number.",
+							Computed:    true,
 						},
 					},
 				},

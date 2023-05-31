@@ -36,12 +36,14 @@ func (d *policyTypesDataSource) Metadata(_ context.Context, req datasource.Metad
 
 func (d *policyTypesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Used to fetch types of policies supported by MDS.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
+				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource.",
 			},
 			"policy_types": schema.SetAttribute{
+				Description: "List of policy types.",
 				Computed:    true,
 				ElementType: types.StringType,
 			},

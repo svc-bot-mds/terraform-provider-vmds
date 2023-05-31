@@ -48,26 +48,29 @@ func (d *mdsPoliciesDatasource) Metadata(_ context.Context, req datasource.Metad
 // Schema defines the schema for the data source.
 func (d *mdsPoliciesDatasource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		MarkdownDescription: "Used to fetch all user access control policies for services.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
+				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource.",
 			},
 			"names": schema.ListAttribute{
-				Optional:    true,
-				ElementType: types.StringType,
+				MarkdownDescription: "Names to search policies by. Ex: `[\"read-only-rmq\"]` .",
+				ElementType:         types.StringType,
+				Optional:            true,
 			},
 			"policies": schema.ListNestedAttribute{
-				Computed: true,
-				Optional: true,
+				Description: "List of fetched policies.",
+				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
-							Computed: true,
+							Description: "ID of the policy.",
+							Computed:    true,
 						},
 						"name": schema.StringAttribute{
-							Computed: true,
-							Optional: true,
+							Description: "Name of the policy.",
+							Computed:    true,
 						},
 					},
 				},
@@ -83,6 +86,7 @@ func (d *mdsPoliciesDatasource) Read(ctx context.Context, req datasource.ReadReq
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 
 	query := &customer_metadata.MdsPoliciesQuery{
+		//TODO take policy type as input for type of service
 		Type: policy_type.RABBITMQ,
 	}
 
