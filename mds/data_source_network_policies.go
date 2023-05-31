@@ -48,26 +48,29 @@ func (d *networkPoliciesDatasource) Metadata(_ context.Context, req datasource.M
 // Schema defines the schema for the data source.
 func (d *networkPoliciesDatasource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		MarkdownDescription: "Used to fetch all `NETWORK` type policies on MDS.",
 		Attributes: map[string]schema.Attribute{
 			"names": schema.SetAttribute{
-				Optional:    true,
-				ElementType: types.StringType,
+				MarkdownDescription: "Names to search policies by. Ex: `[\"allow-all\"]` .",
+				Optional:            true,
+				ElementType:         types.StringType,
 			},
 			"id": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
+				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource.",
 			},
 			"policies": schema.ListNestedAttribute{
-				Computed: true,
-				Optional: true,
+				Description: "List of fetched policies.",
+				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
-							Computed: true,
+							Description: "ID of the policy.",
+							Computed:    true,
 						},
 						"name": schema.StringAttribute{
-							Computed: true,
-							Optional: true,
+							Description: "Name of the policy.",
+							Computed:    true,
 						},
 					},
 				},

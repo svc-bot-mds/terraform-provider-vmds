@@ -63,76 +63,96 @@ func (d *clusterMetadataDataSource) Metadata(_ context.Context, req datasource.M
 // Schema defines the schema for the data source.
 func (d *clusterMetadataDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Used to fetch metadata of a cluster by ID.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Required: true,
+				Description: "ID of the cluster.",
+				Required:    true,
 			},
 			"provider_name": schema.StringAttribute{
-				Computed: true,
+				Description: "Name of the data-plane's cloud provider where cluster is deployed.",
+				Computed:    true,
 			},
 			"name": schema.StringAttribute{
-				Computed: true,
+				Description: "Name of the cluster.",
+				Computed:    true,
 			},
 			"service_type": schema.StringAttribute{
-				Computed: true,
+				Description: "Type of the service of the cluster.",
+				Computed:    true,
 			},
 			"status": schema.StringAttribute{
-				Computed: true,
+				Description: "Status of the cluster.",
+				Computed:    true,
 			},
 			"vhosts": schema.ListNestedAttribute{
-				Computed: true,
+				Description: "List of the vHosts. Specific to `RABBITMQ` service.",
+				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
-							Computed: true,
+							Description: "Name of the vHost.",
+							Computed:    true,
 						},
 					},
 				},
 			},
 			"queues": schema.ListNestedAttribute{
-				Computed: true,
+				Description: "List of the Queues. Specific to `RABBITMQ` service.",
+				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
-							Computed: true,
+							Description: "Name of the queue.",
+							Computed:    true,
 						},
 						"vhost": schema.StringAttribute{
-							Computed: true,
+							Description: "vHost of the queue.",
+							Computed:    true,
 						},
 					},
 				},
 			},
 			"exchanges": schema.ListNestedAttribute{
-				Computed: true,
+				Description: "List of the Exchanges. Specific to `RABBITMQ` service.",
+				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
-							Computed: true,
+							Description: "Name of the exchange.",
+							Computed:    true,
 						},
 						"vhost": schema.StringAttribute{
-							Computed: true,
+							Description: "vHost of the exchange.",
+							Computed:    true,
 						},
 					},
 				},
 			},
 			"bindings": schema.ListNestedAttribute{
-				Computed: true,
+				Description: "List of the Bindings. Specific to `RABBITMQ` service.",
+				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"source": schema.StringAttribute{
-							Computed: true,
+							Description: "Source exchange.",
+							Computed:    true,
 						},
 						"vhost": schema.StringAttribute{
-							Computed: true,
+							Description: "vHost name.",
+							Computed:    true,
 						},
 						"routing_key": schema.StringAttribute{
-							Computed: true,
+							Description: "Routing key.",
+							Computed:    true,
 						},
 						"destination": schema.StringAttribute{
-							Computed: true,
+							Description: "Destination exchange.",
+							Computed:    true,
 						},
 						"destination_type": schema.StringAttribute{
-							Computed: true,
+							Description: "Type of the destination.",
+							Computed:    true,
 						},
 					},
 				},

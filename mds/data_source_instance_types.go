@@ -2,6 +2,7 @@ package mds
 
 import (
 	"context"
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -60,47 +61,60 @@ func (d *instanceTypesDataSource) Metadata(_ context.Context, req datasource.Met
 // Schema defines the schema for the data source.
 func (d *instanceTypesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Used to fetch all instance sizes available for a service type on MDS.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
+				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource.",
 			},
 			"service_type": schema.StringAttribute{
-				Required: true,
+				MarkdownDescription: fmt.Sprintf("Type of the service. Supported values: %s .", supportedServiceTypesMarkdown()),
+				Required:            true,
 			},
 			"instance_types": schema.ListNestedAttribute{
-				Computed: true,
+				Description: "List of the instance sizes.",
+				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
-							Computed: true,
+							Description: "ID of the size.",
+							Computed:    true,
 						},
 						"instance_size": schema.StringAttribute{
-							Computed: true,
+							Description: "Friendly identifier of the size.",
+							Computed:    true,
 						},
 						"instance_size_description": schema.StringAttribute{
-							Computed: true,
+							Description: "Description of the size.",
+							Computed:    true,
 						},
 						"service_type": schema.StringAttribute{
-							Required: true,
+							Description: "Type of the service supporting this size.",
+							Required:    true,
 						},
 						"cpu": schema.StringAttribute{
-							Computed: true,
+							Description: "CPU that will be required by this size.",
+							Computed:    true,
 						},
 						"memory": schema.StringAttribute{
-							Computed: true,
+							Description: "Memory that will be required by this size.",
+							Computed:    true,
 						},
 						"storage": schema.StringAttribute{
-							Computed: true,
+							Description: "Storage that will be required by this size.",
+							Computed:    true,
 						},
 						"metadata": schema.SingleNestedAttribute{
-							Computed: true,
+							Description: "Service specific additional resources.",
+							Computed:    true,
 							Attributes: map[string]schema.Attribute{
 								"max_connections": schema.NumberAttribute{
-									Computed: true,
+									Description: "Total number of connections that can be established to the instance of this size.",
+									Computed:    true,
 								},
 								"nodes": schema.NumberAttribute{
-									Computed: true,
+									Description: "Number of nodes that will be spawn of the instance of this size.",
+									Computed:    true,
 								},
 							},
 						},
