@@ -46,25 +46,30 @@ func (d *usersDatasource) Metadata(_ context.Context, req datasource.MetadataReq
 // Schema defines the schema for the data source.
 func (d *usersDatasource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Used to fetch all users registered on MDS in an Org (determined by the token used for provider).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
 			},
 			"users": schema.ListNestedAttribute{
-				Computed: true,
-				Optional: true,
+				Description: "List of users on MDS.",
+				Computed:    true,
+				Optional:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
-							Computed: true,
+							Description: "ID of the user.",
+							Computed:    true,
 						},
 						"name": schema.StringAttribute{
-							Computed: true,
-							Optional: true,
+							Description: "Name of the user.",
+							Computed:    true,
+							Optional:    true,
 						},
 						"email": schema.StringAttribute{
-							Computed: true,
+							Description: "Email of the user.",
+							Computed:    true,
 						},
 					},
 				},

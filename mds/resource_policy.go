@@ -83,38 +83,43 @@ func (r *policyResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 	tflog.Info(ctx, "INIT__Schema")
 
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "",
+		Description: "Represents a policy on MDS.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Computed: true,
+				Description: "Auto-generated ID of the policy after creation, and can be used to import it from MDS to terraform state.",
+				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"name": schema.StringAttribute{
-				Required: true,
+				Description: "Name of the policy",
+				Required:    true,
 			},
 			"service_type": schema.StringAttribute{
-				Required: true,
+				MarkdownDescription: "Type of policy to manage. Supported values are: `RABBITMQ`, `NETWORK`.",
+				Required:            true,
 			},
 			"resource_ids": schema.SetAttribute{
+				Description: "IDs of service resources/instances being managed by the policy.",
 				Computed:    true,
 				ElementType: types.StringType,
 			},
 			"permission_specs": schema.ListNestedAttribute{
-				Optional: true,
+				MarkdownDescription: "Permissions to enforce on service resources. Only required for policies other than `NETWORK` type.",
+				Optional:            true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"role": schema.StringAttribute{
-							MarkdownDescription: "One or more of (monitoring,write,management,policymaker,read,configure). Please make use of `datasource_service_roles` to get roles.",
+							MarkdownDescription: "One or more of (monitoring,write,management,policymaker,read,configure). Please make use of datasource `vmds_service_roles` to get roles.",
 							Required:            true,
 						},
 						"resource": schema.StringAttribute{
-							MarkdownDescription: "One or the cluster/instance name. Please make use of `datasource_clusters` to get resource.",
+							MarkdownDescription: "The cluster/instance name. Please make use of datasource `vmds_clusters` to get resource.",
 							Required:            true,
 						},
 						"permissions": schema.SetAttribute{
-							MarkdownDescription: "One or more of (monitoring,write,management,policymaker,read,configure). Please make use of `datasource_service_roles` to get roles.",
+							MarkdownDescription: "One or more of (monitoring,write,management,policymaker,read,configure). Please make use of datasource `vmds_service_roles` to get roles.",
 							Required:            true,
 							ElementType:         types.StringType,
 						},
@@ -122,8 +127,8 @@ func (r *policyResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 				},
 			},
 			"network_spec": schema.SingleNestedAttribute{
-				Optional: true,
-
+				MarkdownDescription: "Network config to allow access to service resource. Required only for `NETWORK` type policy.",
+				Optional:            true,
 				CustomType: types.ObjectType{
 					AttrTypes: map[string]attr.Type{
 						"cidr": types.StringType,
@@ -134,11 +139,13 @@ func (r *policyResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 				},
 				Attributes: map[string]schema.Attribute{
 					"cidr": schema.StringAttribute{
-						Required: true,
+						MarkdownDescription: "CIDR value to allow access from. Ex: `10.45.66.80/30`",
+						Required:            true,
 					},
 					"network_port_ids": schema.SetAttribute{
-						Required:    true,
-						ElementType: types.StringType,
+						MarkdownDescription: "IDs of network ports to open up for access. Please make use of datasource `vmds_network_ports` to get IDs of ports available for services.",
+						Required:            true,
+						ElementType:         types.StringType,
 					},
 				},
 			},
