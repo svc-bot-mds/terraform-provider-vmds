@@ -11,6 +11,7 @@ import (
 const (
 	headerAuth        = "csp-auth-token"
 	headerContentType = "content-type"
+	headerTokenType   = "token-type"
 	contentTypeJSON   = "application/json"
 )
 
@@ -71,6 +72,7 @@ func (r *Root) addHeaders(req *http.Request) {
 	}
 	if r.Token != nil {
 		req.Header.Set(headerAuth, *r.Token)
+		req.Header.Set(headerTokenType, "api_token")
 	}
 }
 
