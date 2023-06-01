@@ -12,7 +12,7 @@ import (
 
 func main() {
 	err := providerserver.Serve(context.Background(), mds.New, providerserver.ServeOpts{
-		Address: "svc-bot-mds/vmds",
+		Address: "registry.terraform.io/svc-bot-mds/vmds",
 	})
 	if err != nil {
 		return
