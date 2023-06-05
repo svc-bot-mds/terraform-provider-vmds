@@ -12,7 +12,7 @@ provider "vmds" {
 }
 
 locals {
-  policies = ["viewer-policy", "eu301"]
+  policies = ["test-svc-pol"]
 }
 
 data "vmds_policies" "all" {
@@ -23,12 +23,16 @@ output "policies_data" {
 }
 
 resource "vmds_service_account" "test" {
-  name       = "test-svc-tf-update1"
+  name       = "test-svc-tf-testing-131"
   tags       = ["update-svc-acct", "from-tf"]
   policy_ids = [for policy in data.vmds_policies.all.policies : policy.id if contains(local.policies, policy.name)]
 
-  // non editable fields
-  lifecycle {
-    ignore_changes = [name]
+  //Oauth app details
+  oauth_app = {
+    description = " description1"
+    ttl_spec    = {
+      ttl       = "1"
+      time_unit = "HOURS"
+    }
   }
 }

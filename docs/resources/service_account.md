@@ -4,11 +4,15 @@ page_title: "vmds_service_account Resource - vmds"
 subcategory: ""
 description: |-
   Represents a service account created on MDS, can be used to create/update/delete/import a service account.
+  Note: 1. Only service accounts with valid oAuthapp can be imported.
+  2. Please make sure you have selected the valid policy with active clusters while creating the service account
 ---
 
 # vmds_service_account (Resource)
 
 Represents a service account created on MDS, can be used to create/update/delete/import a service account.
+Note: 1. Only service accounts with valid oAuthapp can be imported.
+2. Please make sure you have selected the valid policy with active clusters while creating the service account
 
 ## Example Usage
 
@@ -34,6 +38,8 @@ resource "vmds_service_account" "example" {
 
 ### Optional
 
+- `credential` (Attributes) Holds the Client Secret details. (see [below for nested schema](#nestedatt--credential))
+- `oauth_app` (Attributes) Provides OauthApp details. (see [below for nested schema](#nestedatt--oauth_app))
 - `policy_ids` (Set of String) IDs of service policies to be associated with service account.
 - `tags` (Set of String) Tags or labels to categorise service accounts for ease of finding.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
@@ -42,6 +48,44 @@ resource "vmds_service_account" "example" {
 
 - `id` (String) Auto-generated ID after creating an user, and can be passed to import an existing user from MDS to terraform state.
 - `status` (String) Active status of service account on MDS.
+
+<a id="nestedatt--credential"></a>
+### Nested Schema for `credential`
+
+Read-Only:
+
+- `client_id` (String) Client Id generated for the service account.
+- `client_secret` (String) Client Secret generated for the service account.
+- `grant_type` (String) Grant Type of the credentials.
+- `org_id` (String) Org Id of the current user.
+
+
+<a id="nestedatt--oauth_app"></a>
+### Nested Schema for `oauth_app`
+
+Optional:
+
+- `description` (String) Description of the OauthApp.
+- `ttl_spec` (Attributes) OauthApp Access token Duration details. Valid TTL value : less than 5 hours or 300 minutes. (see [below for nested schema](#nestedatt--oauth_app--ttl_spec))
+
+Read-Only:
+
+- `app_id` (String) Id of the oAuthApp.
+- `app_type` (String) Type of the oAuthApp.
+- `created` (String) Time when the service account was created.
+- `created_by` (String) Username of the user who has created the service account.
+- `modified` (String) Time when the service account was modified.
+- `modified_by` (String) Username of the user who has updated the service account.
+
+<a id="nestedatt--oauth_app--ttl_spec"></a>
+### Nested Schema for `oauth_app.ttl_spec`
+
+Optional:
+
+- `time_unit` (String) Unit of time. Valid values : `HOURS` or `MINUTES`.
+- `ttl` (Number) time to live value.
+
+
 
 <a id="nestedatt--timeouts"></a>
 ### Nested Schema for `timeouts`

@@ -165,7 +165,7 @@ func (s *Service) CreateMdsServiceAccount(requestBody *MdsCreateSvcAccountReques
 	return &response, err
 }
 
-// GetMDSServiceAccountOauthApp - Generate oauthDetails for the service account
+// GetMDSServiceAccountOauthApp - Fetch oauthDetails for the service account
 func (s *Service) GetMDSServiceAccountOauthApp(id string) (*model.MDSServieAccountOauthApp, error) {
 
 	var response model.MDSServieAccountOauthApp

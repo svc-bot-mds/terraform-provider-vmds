@@ -2,6 +2,7 @@ package mds
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -14,7 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/svc-bot-mds/terraform-provider-vmds/client/constants/time_unit"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
+	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds/core"
 	customer_metadata "github.com/svc-bot-mds/terraform-provider-vmds/client/mds/customer-metadata"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/model"
 	"time"
@@ -41,7 +44,6 @@ type serviceAccountResource struct {
 
 type serviceAccountResourceModel struct {
 	ID         types.String          `tfsdk:"id"`
-	AppId      types.String          `tfsdk:"app_id"`
 	Name       types.String          `tfsdk:"name"`
 	Status     types.String          `tfsdk:"status"`
 	PolicyIds  types.Set             `tfsdk:"policy_ids"`
@@ -49,7 +51,6 @@ type serviceAccountResourceModel struct {
 	Timeouts   timeouts.Value        `tfsdk:"timeouts"`
 	Credential types.Object          `tfsdk:"credential"`
 	OauthApp   basetypes.ObjectValue `tfsdk:"oauth_app"`
-	//OauthApp   *ServiceAccountOauthApp `tfsdk:"oauth_app"`
 }
 
 type ServiceAccountCredential struct {
@@ -101,18 +102,11 @@ func (r *serviceAccountResource) Schema(ctx context.Context, _ resource.SchemaRe
 	tflog.Info(ctx, "INIT__Schema")
 
 	resp.Schema = schema.Schema{
-		Description: "Represents a service account created on MDS, can be used to create/update/delete/import a service account.\n" +
-			"Only service accounts with valid oAuthapp can be imported.",
+		MarkdownDescription: "Represents a service account created on MDS, can be used to create/update/delete/import a service account.\n" +
+			"Note: 1. Only service accounts with valid oAuthapp can be imported.\n2. Please make sure you have selected the valid policy with active clusters while creating the service account",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "Auto-generated ID after creating an user, and can be passed to import an existing user from MDS to terraform state.",
-				Computed:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"app_id": schema.StringAttribute{
-				Description: "ID of oAuthApp of the service account.",
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -128,7 +122,6 @@ func (r *serviceAccountResource) Schema(ctx context.Context, _ resource.SchemaRe
 			"status": schema.StringAttribute{
 				Description: "Active status of service account on MDS.",
 				Computed:    true,
-				Optional:    true,
 			},
 			"policy_ids": schema.SetAttribute{
 				Description: "IDs of service policies to be associated with service account.",
@@ -146,7 +139,7 @@ func (r *serviceAccountResource) Schema(ctx context.Context, _ resource.SchemaRe
 				Create: true,
 			}),
 			"oauth_app": schema.SingleNestedAttribute{
-				MarkdownDescription: "Provides OauthApp details. Please make sure you have selected the valid policy with active clusters while creating the service account",
+				MarkdownDescription: "Provides OauthApp details.",
 				Computed:            true,
 				Optional:            true,
 				CustomType: types.ObjectType{
@@ -287,12 +280,22 @@ func (r *serviceAccountResource) Create(ctx context.Context, req resource.Create
 
 	svcAcctCredentials, err := r.client.CustomerMetadata.CreateMdsServiceAccount(&svcAccountRequest)
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Submitting request to create service account",
-			"There was some issue while creating the service account and oauth app for the service account ."+
-				" Please verify if the service account was created without an oauth app and delete it."+
-				" Unexpected error: "+err.Error(),
-		)
+		apiErr := core.ApiError{}
+		errors.As(err, &apiErr)
+		if apiErr.ErrorCode == customer_metadata.DuplicateServiceAccount {
+			resp.Diagnostics.AddError(
+				"Submitting request to create service account",
+				"There was some issue while creating the service account."+
+					" Unexpected error: "+err.Error(),
+			)
+		} else {
+			resp.Diagnostics.AddError(
+				"Submitting request to create service account",
+				"There was some issue while creating the service account and oauth app for the service account ."+
+					" Please verify if the service account was created without an oauth app and delete it."+
+					" Unexpected error: "+err.Error(),
+			)
+		}
 		return
 	}
 
@@ -316,8 +319,8 @@ func (r *serviceAccountResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 	if svcAccounts.Page.TotalElements == 0 {
-		resp.Diagnostics.AddError("Fetching svcAccounts",
-			fmt.Sprintf("Could not find any svcAccounts by name [%s], server error must have occurred while creating svc account.", plan.Name.ValueString()),
+		resp.Diagnostics.AddError("Fetching Service Account",
+			fmt.Sprintf("Could not find any Service Account by name [%s], server error must have occurred while creating svc account.", plan.Name.ValueString()),
 		)
 		return
 	}
@@ -341,8 +344,8 @@ func (r *serviceAccountResource) Create(ctx context.Context, req resource.Create
 		svcAccountsOauthApps, err = r.client.CustomerMetadata.UpdateMDSServiceAccountOauthApp(createdSvcAcct.Id, &updateRequest, svcAccountsOauthApps.AppId)
 		if err != nil {
 			resp.Diagnostics.AddError(
-				"Updating MDS service account- Oauth App details",
-				"Could not update service account -oauth app details, unexpected error: "+err.Error(),
+				"Creating MDS service account - Oauth App details",
+				"Could not update service account - oauth app details, unexpected error: "+err.Error(),
 			)
 			return
 		}
@@ -395,20 +398,27 @@ func (r *serviceAccountResource) Update(ctx context.Context, req resource.Update
 		)
 		return
 	}
-
+	svcAccountsOauthAppResponse, oauthError := r.client.CustomerMetadata.GetMDSServiceAccountOauthApp(state.ID.ValueString())
+	if oauthError != nil {
+		resp.Diagnostics.AddError("Fetching oAuth Apps for the Service Account",
+			"Could not fetch oAuth Apps for the Service Account, unexpected error: "+err.Error(),
+		)
+		return
+	}
 	var serviceAccountOauthApp = convertToOauthAppModel(ctx, &state)
 	var oauthApp *model.MDSServieAccountOauthApp
-	if serviceAccountOauthApp.Description.ValueString() != "" || serviceAccountOauthApp.TTLSpec.TTL.ValueInt64() != 0 || serviceAccountOauthApp.TTLSpec.TimeUnit.ValueString() != "" {
+	if serviceAccountOauthApp.Description.ValueString() != "" || serviceAccountOauthApp.TTLSpec.TTL.ValueInt64() != 0 ||
+		serviceAccountOauthApp.TTLSpec.TimeUnit.ValueString() != "" {
 		updateRequest := customer_metadata.MDSOauthAppUpdateRequest{
 			Description: serviceAccountOauthApp.Description.ValueString(),
 			TTL:         serviceAccountOauthApp.TTLSpec.TTL.ValueInt64(),
 			TimeUnit:    serviceAccountOauthApp.TTLSpec.TimeUnit.ValueString(),
 		}
-		oauthApp, err = r.client.CustomerMetadata.UpdateMDSServiceAccountOauthApp(state.ID.ValueString(), &updateRequest, state.AppId.ValueString())
+		oauthApp, err = r.client.CustomerMetadata.UpdateMDSServiceAccountOauthApp(state.ID.ValueString(), &updateRequest, svcAccountsOauthAppResponse.AppId)
 		if err != nil {
 			resp.Diagnostics.AddError(
-				"Updating MDS service account- Oauth App details",
-				"Could not update service account -oauth app details, unexpected error: "+err.Error(),
+				"Updating MDS service account - Oauth App details",
+				"Could not update service account - oauth app details, unexpected error: "+err.Error(),
 			)
 			return
 		}
@@ -508,14 +518,9 @@ func (r *serviceAccountResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 	// Overwrite items with refreshed state
-	if svcAccountsOauthApps != nil {
-		if saveFromSvcAccountCreateResponse(&ctx, &resp.Diagnostics, &state, nil, svcAcct, svcAccountsOauthApps) != 0 {
-			return
-		}
-	} else {
-		if saveFromSvcAccountCreateResponse(&ctx, &resp.Diagnostics, &state, nil, svcAcct, nil) != 0 {
-			return
-		}
+
+	if saveFromSvcAccountCreateResponse(&ctx, &resp.Diagnostics, &state, nil, svcAcct, svcAccountsOauthApps) != 0 {
+		return
 	}
 
 	// Set refreshed state
@@ -530,7 +535,6 @@ func (r *serviceAccountResource) Read(ctx context.Context, req resource.ReadRequ
 
 func saveFromSvcAccountCreateResponse(ctx *context.Context, diagnostics *diag.Diagnostics, state *serviceAccountResourceModel,
 	serviceAccountCreateResponse *model.MdsServiceAccountCreate, createdSvcAccount *model.MdsServiceAccount, svcAccountsOauthApps *model.MDSServieAccountOauthApp) int8 {
-	tflog.Info(*ctx, "Saving create response to resourceModel state/plan", map[string]interface{}{"service_accounts": *serviceAccountCreateResponse})
 	state.Name = types.StringValue(createdSvcAccount.Name)
 	state.Status = types.StringValue(createdSvcAccount.Status)
 	tags, diags := types.SetValueFrom(*ctx, types.StringType, createdSvcAccount.Tags)
@@ -558,7 +562,6 @@ func saveFromSvcAccountCreateResponse(ctx *context.Context, diagnostics *diag.Di
 
 	//oauth App
 	if svcAccountsOauthApps != nil {
-		state.AppId = types.StringValue(svcAccountsOauthApps.AppId)
 		oauthAppModel := ServiceAccountOauthApp{
 			OauthAppId:  types.StringValue(svcAccountsOauthApps.AppId),
 			AppType:     types.StringValue(svcAccountsOauthApps.AppType),
@@ -615,7 +618,6 @@ func saveFromSvcAccountCreateResponseFromUpdate(ctx *context.Context, diagnostic
 
 	//oauth App
 	if svcAccountsOauthApps != nil {
-		state.AppId = types.StringValue(svcAccountsOauthApps.AppId)
 		oauthAppModel := ServiceAccountOauthApp{
 			OauthAppId:  types.StringValue(svcAccountsOauthApps.AppId),
 			AppType:     types.StringValue(svcAccountsOauthApps.AppType),
@@ -639,4 +641,22 @@ func saveFromSvcAccountCreateResponseFromUpdate(ctx *context.Context, diagnostic
 		state.OauthApp = oauthObject
 	}
 	return 0
+}
+
+func (r *serviceAccountResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var plan serviceAccountResourceModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if !plan.OauthApp.IsNull() {
+		oauthAppModel := convertToOauthAppModel(ctx, &plan)
+		if (oauthAppModel.TTLSpec.TTL.ValueInt64() > 300 && oauthAppModel.TTLSpec.TimeUnit.ValueString() == time_unit.MINUTES) ||
+			(oauthAppModel.TTLSpec.TTL.ValueInt64() > 5 && oauthAppModel.TTLSpec.TimeUnit.ValueString() == time_unit.HOURS) ||
+			(oauthAppModel.TTLSpec.TimeUnit.ValueString() != time_unit.MINUTES && oauthAppModel.TTLSpec.TimeUnit.ValueString() != time_unit.HOURS) {
+			resp.Diagnostics.AddError("Validation Failed", "Please enter a valid TTL value less than 5 hours or 300 minutes.")
+		}
+	}
 }
