@@ -148,21 +148,50 @@ func (s *Service) GetMdsServiceAccounts(query *MdsServiceAccountsQuery) (model.P
 }
 
 // CreateMdsServiceAccount - Submits a request to create service account
-func (s *Service) CreateMdsServiceAccount(requestBody *MdsCreateSvcAccountRequest) error {
+func (s *Service) CreateMdsServiceAccount(requestBody *MdsCreateSvcAccountRequest) (*model.MdsServiceAccountCreate, error) {
 	if requestBody == nil {
-		return fmt.Errorf("requestBody cannot be nil")
+		return nil, fmt.Errorf("requestBody cannot be nil")
 	}
-
+	var response model.MdsServiceAccountCreate
 	requestBody.AccountType = account_type.SERVICE_ACCOUNT
 
 	urlPath := fmt.Sprintf("%s/%s", s.Endpoint, Users)
 
-	_, err := s.Api.Post(&urlPath, requestBody, nil)
+	_, err := s.Api.Post(&urlPath, requestBody, &response)
 	if err != nil {
-		return err
+		return &response, err
 	}
 
-	return nil
+	return &response, err
+}
+
+// GetMDSServiceAccountOauthApp - Generate oauthDetails for the service account
+func (s *Service) GetMDSServiceAccountOauthApp(id string) (*model.MDSServieAccountOauthApp, error) {
+
+	var response model.MDSServieAccountOauthApp
+
+	urlPath := fmt.Sprintf("%s/%s/%s/%s", s.Endpoint, Users, id, OAuthApps)
+	_, err := s.Api.Get(&urlPath, nil, &response)
+	if err != nil {
+		return &response, err
+	}
+
+	return &response, err
+}
+
+// UpdateMDSServiceAccountOauthApp - To Update the Oauth app details
+func (s *Service) UpdateMDSServiceAccountOauthApp(id string, requestBody *MDSOauthAppUpdateRequest, appId string) (*model.MDSServieAccountOauthApp, error) {
+
+	var response model.MDSServieAccountOauthApp
+
+	urlPath := fmt.Sprintf("%s/%s/%s/%s/%s", s.Endpoint, Users, id, OAuthApps, appId)
+	_, err := s.Api.Patch(&urlPath, requestBody, &response)
+
+	if err != nil {
+		return &response, err
+	}
+
+	return &response, err
 }
 
 // UpdateMdsServiceAccount - Submits a request to update service account
@@ -174,7 +203,6 @@ func (s *Service) UpdateMdsServiceAccount(id string, requestBody *MdsSvcAccountU
 		return fmt.Errorf("requestBody cannot be nil")
 	}
 	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, Users, id)
-
 	_, err := s.Api.Patch(&urlPath, requestBody, nil)
 	return err
 }

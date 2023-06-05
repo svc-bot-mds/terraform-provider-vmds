@@ -71,8 +71,8 @@ func (r *Root) addHeaders(req *http.Request) {
 		req.Header.Add(header, value)
 	}
 	if r.Token != nil {
-		req.Header.Set(headerAuth, *r.Token)
-		req.Header.Set(headerTokenType, "api_token")
+		req.Header.Set(headerAuth, " "+*r.Token)
+		//	TODO: add token-type
 	}
 }
 
