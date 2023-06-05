@@ -73,30 +73,34 @@ func (r *serviceAccountResource) Schema(ctx context.Context, _ resource.SchemaRe
 	tflog.Info(ctx, "INIT__Schema")
 
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "",
+		Description: "Represents a service account created on MDS, can be used to create/update/delete/import a service account.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Computed: true,
+				Description: "Auto-generated ID after creating an user, and can be passed to import an existing user from MDS to terraform state.",
+				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"name": schema.StringAttribute{
-				MarkdownDescription: "Updating the name results in deletion of existing service account and new service account with updated name is created.",
-				Required:            true,
+				Description: "Updating the name results in deletion of existing service account and new service account with updated name is created.",
+				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"status": schema.StringAttribute{
-				Computed: true,
+				Description: "Active status of service account on MDS.",
+				Computed:    true,
 			},
 			"policy_ids": schema.SetAttribute{
+				Description: "IDs of service policies to be associated with service account.",
 				Optional:    true,
 				Computed:    false,
 				ElementType: types.StringType,
 			},
 			"tags": schema.SetAttribute{
+				Description: "Tags or labels to categorise service accounts for ease of finding.",
 				Optional:    true,
 				Computed:    true,
 				ElementType: types.StringType,

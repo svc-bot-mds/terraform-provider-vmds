@@ -2,11 +2,14 @@ package mds
 
 import (
 	"context"
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/constants/oauth_type"
+	"github.com/svc-bot-mds/terraform-provider-vmds/client/constants/service_type"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/model"
 	"os"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -43,13 +46,16 @@ func (p *mdsProvider) Metadata(_ context.Context, _ provider.MetadataRequest, re
 // Schema defines the provider-level schema for configuration data.
 func (p *mdsProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Interact with VMware Managed Data Services",
 		Attributes: map[string]schema.Attribute{
 			"host": schema.StringAttribute{
-				Optional: true,
+				Description: "URI for MDS API. May also be provided via MDS_HOST environment variable.",
+				Optional:    true,
 			},
 			"api_token": schema.StringAttribute{
-				Optional:  true,
-				Sensitive: true,
+				Description: "API Token for MDS API. May also be provided via MDS_API_TOKEN environment variable.",
+				Optional:    true,
+				Sensitive:   true,
 			},
 		},
 	}
@@ -69,6 +75,7 @@ func (p *mdsProvider) Configure(ctx context.Context, req provider.ConfigureReque
 	// If practitioner provided a configuration value for any of the
 	// attributes, it must be a known value.
 
+	//TODO read also from env variables
 	if config.Host.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("host"),
@@ -188,4 +195,14 @@ func (p *mdsProvider) Resources(_ context.Context) []func() resource.Resource {
 		NewServiceAccountResource,
 		NewPolicyResource,
 	}
+}
+
+func supportedServiceTypesMarkdown() string {
+	var sb strings.Builder
+	serviceTypes := service_type.GetAll()
+	sb.WriteString(fmt.Sprintf("`%s`", serviceTypes[0]))
+	for _, serviceType := range serviceTypes[1:] {
+		sb.WriteString(fmt.Sprintf(", `%s`", serviceType))
+	}
+	return sb.String()
 }

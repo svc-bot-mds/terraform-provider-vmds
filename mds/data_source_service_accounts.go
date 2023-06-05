@@ -47,6 +47,7 @@ func (d *serviceAccountsDatasource) Metadata(_ context.Context, req datasource.M
 // Schema defines the schema for the data source.
 func (d *serviceAccountsDatasource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Used to fetch all service accounts on MDS for an Org (determined by the token used for provider).",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -58,13 +59,16 @@ func (d *serviceAccountsDatasource) Schema(_ context.Context, _ datasource.Schem
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
-							Computed: true,
+							Description: "ID of the service account.",
+							Computed:    true,
 						},
 						"name": schema.StringAttribute{
-							Computed: true,
+							Description: "Name of the service account.",
+							Computed:    true,
 						},
 						"status": schema.StringAttribute{
-							Computed: true,
+							Description: "Status of the service account.",
+							Computed:    true,
 						},
 					},
 				},

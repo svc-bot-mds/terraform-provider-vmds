@@ -52,32 +52,40 @@ func (d *serviceRolesDatasource) Metadata(_ context.Context, req datasource.Meta
 // Schema defines the schema for the data source.
 func (d *serviceRolesDatasource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Used to fetch all roles applicable for services on MDS.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource",
 			},
 			"type": schema.StringAttribute{
-				Required: true,
+				Description: "Type of the service on MDS. Supported values: `RABBITMQ`.",
+				Required:    true,
 			},
 			"roles": schema.ListNestedAttribute{
-				Computed: true,
+				Description: "List of service roles.",
+				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"role_id": schema.StringAttribute{
-							Computed: true,
+							Description: "ID of the role.",
+							Computed:    true,
 						},
 						"name": schema.StringAttribute{
-							Computed: true,
+							Description: "Name of the role.",
+							Computed:    true,
 						},
 						"description": schema.StringAttribute{
-							Computed: true,
+							Description: "Description of the role.",
+							Computed:    true,
 						},
 						"type": schema.StringAttribute{
-							Computed: true,
+							Description: "Type of the role.",
+							Computed:    true,
 						},
 						"permission_id": schema.StringAttribute{
-							Computed: true,
+							Description: "ID of the permission for the role.",
+							Computed:    true,
 						},
 					},
 				},

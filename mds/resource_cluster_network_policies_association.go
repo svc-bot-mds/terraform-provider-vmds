@@ -63,17 +63,20 @@ func (r *clusterNetworkPoliciesAssociationResource) Schema(ctx context.Context, 
 	tflog.Info(ctx, "INIT__Schema")
 
 	resp.Schema = schema.Schema{
+		MarkdownDescription: "Represents the association between a service instance/cluster and `NETWORK` type policies.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Required: true,
-				Computed: false,
+				Description: "ID of the cluster.",
+				Required:    true,
+				Computed:    false,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"policy_ids": schema.SetAttribute{
-				Required:    true,
-				ElementType: types.StringType,
+				MarkdownDescription: "IDs of the network policies to associate with the cluster.",
+				Required:            true,
+				ElementType:         types.StringType,
 			},
 		},
 	}

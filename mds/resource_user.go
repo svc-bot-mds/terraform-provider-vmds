@@ -85,29 +85,33 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 	tflog.Info(ctx, "INIT__Schema")
 
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "",
+		Description: "Represents an User registered on MDS, can be used to create/update/delete/import an user.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Computed: true,
+				Description: "Auto-generated ID after creating an user, and can be passed to import an existing user from MDS to terraform state.",
+				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"email": schema.StringAttribute{
-				MarkdownDescription: "Updating the email results in deletion of existing user  and new user with updated email/name is created.",
-				Required:            true,
+				Description: "Updating the email results in deletion of existing user and new user with updated email/name is created.",
+				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"status": schema.StringAttribute{
-				Computed: true,
-				Default:  stringdefault.StaticString("INVITED"),
+				Description: "Active status of user on MDS.",
+				Computed:    true,
+				Default:     stringdefault.StaticString("INVITED"),
 			},
 			"username": schema.StringAttribute{
-				Computed: true,
+				Description: "Short name of user.",
+				Computed:    true,
 			},
 			"policy_ids": schema.SetAttribute{
+				Description: "IDs of service policies to be associated with user.",
 				Optional:    true,
 				Computed:    false,
 				ElementType: types.StringType,
@@ -121,6 +125,7 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 				},
 			},
 			"tags": schema.SetAttribute{
+				Description: "Tags or labels to categorise users for ease of finding.",
 				Optional:    true,
 				Computed:    true,
 				ElementType: types.StringType,
@@ -129,27 +134,33 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 				Create: true,
 			}),
 			"service_roles": schema.ListNestedAttribute{
-				Computed: true,
+				Description: "Roles that determines access level inside services on MDS.",
+				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"role_id": schema.StringAttribute{
-							Computed: true,
+							Description: "ID of the role.",
+							Computed:    true,
 						},
 						"name": schema.StringAttribute{
-							Computed: true,
+							Description: "Name of the role.",
+							Computed:    true,
 						},
 					},
 				},
 			},
 			"org_roles": schema.ListNestedAttribute{
-				Computed: true,
+				Description: "Roles that determines access level of the user on MDS.",
+				Computed:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"role_id": schema.StringAttribute{
-							Computed: true,
+							Description: "ID of the role.",
+							Computed:    true,
 						},
 						"name": schema.StringAttribute{
-							Computed: true,
+							Description: "Name of the role.",
+							Computed:    true,
 						},
 					},
 				},
