@@ -7,4 +7,12 @@ resource "vmds_service_account" "example" {
   lifecycle {
     ignore_changes = [name]
   }
+  //Oauth app details
+  oauth_app = {
+    description = "Oauth app created for example-acc service account"
+    ttl_spec    = {
+      ttl       = "1"
+      time_unit = "HOURS"
+    }
+  }
 }
