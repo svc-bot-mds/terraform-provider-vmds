@@ -4,22 +4,22 @@ page_title: "vmds_regions Data Source - vmds"
 subcategory: ""
 description: |-
   Used to fetch the regions having data-planes by desired amount of resources available.
+  Note:
+  At a time, either instance_size or all of (cpu, memory, storage, node_count) can be passed.
 ---
 
 # vmds_regions (Data Source)
 
 Used to fetch the regions having data-planes by desired amount of resources available.
+## Note:
+- At a time, either `instance_size` or all of (`cpu`, `memory`, `storage`, `node_count`) can be passed.
 
 ## Example Usage
 
 ```terraform
 // pass valid data with respect to the instance type selected
 data "vmds_regions" "dedicated_aws" {
-  cpu                  = "1"
-  cloud_provider       = "aws"
-  memory               = "4Gi"
-  storage              = "4Gi"
-  node_count           = "1"
+  instance_size = "XX-SMALL"
   dedicated_data_plane = true
 }
 ```
@@ -30,14 +30,15 @@ data "vmds_regions" "dedicated_aws" {
 ### Required
 
 - `cloud_provider` (String) Shortname of cloud provider platform where data-plane lives. Ex: `aws`, `gcp` .
-- `cpu` (String) K8s CPU units required. Ex: `500m`, `1` (1000m) .
-- `memory` (String) K8s memory units required. Ex: `800Mi`, `2Gi` .
-- `node_count` (String) Count of worker nodes that must be present in a data-plane. Ex: `3` .
-- `storage` (String) K8s storage units required. Ex: `2Gi` .
 
 ### Optional
 
+- `cpu` (String) K8s CPU units required. Ex: `500m`, `1` (1000m) .
 - `dedicated_data_plane` (Boolean) If set to `true`, only data-planes that are exclusive to current Org (determined by API token used) are queried. Else only shared ones.
+- `instance_size` (String) Type of instance size. Supported values: `XX-SMALL`, `X-SMALL`, `SMALL`, `LARGE`, `XX-LARGE`.
+- `memory` (String) K8s memory units required. Ex: `800Mi`, `2Gi` .
+- `node_count` (String) Count of worker nodes that must be present in a data-plane. Ex: `3` .
+- `storage` (String) K8s storage units required. Ex: `2Gi` .
 
 ### Read-Only
 

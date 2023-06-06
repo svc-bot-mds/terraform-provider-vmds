@@ -101,9 +101,12 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 	tflog.Info(ctx, "INIT__Schema")
 
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Some attributes only used one-time for creation are: `dedicated`, `network_policy_ids`." +
+		MarkdownDescription: "Represents a service instance or cluster. Some attributes are used only once for creation, they are: `dedicated`, `network_policy_ids`." +
 			"\nChanging only `tags` is supported at the moment. If you wish to update network policies associated with it, please refer resource: " +
-			"`vmds_cluster_network_policies_association`",
+			"`vmds_cluster_network_policies_association`.\n" +
+			"## Notes\n" +
+			fmt.Sprintf("1. Default timeout for creation is `%v`.\n", defaultCreateTimeout) +
+			fmt.Sprintf("2. Default timeout for deletion is `%v`.", defaultDeleteTimeout),
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "ID of the cluster.",
@@ -127,7 +130,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				},
 			},
 			"service_type": schema.StringAttribute{
-				MarkdownDescription: fmt.Sprintf("Type of MDS Cluster to be created. Supported values: %s .", supportedServiceTypesMarkdown()),
+				MarkdownDescription: fmt.Sprintf("Type of MDS Cluster to be created. Supported values: %s .\n Default is `RABBITMQ`.", supportedServiceTypesMarkdown()),
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString(service_type.RABBITMQ),
@@ -169,7 +172,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				ElementType: types.StringType,
 			},
 			"network_policy_ids": schema.SetAttribute{
-				Description: "List of network policies to attach to the cluster.",
+				Description: "IDs of network policies to attach to the cluster.",
 				Optional:    true,
 				Computed:    false,
 				ElementType: types.StringType,
