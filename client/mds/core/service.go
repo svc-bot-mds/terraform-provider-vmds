@@ -73,7 +73,11 @@ func (r *Root) Post(url *string, reqBody interface{}, dest interface{}) ([]byte,
 		return nil, err
 	}
 
-	if dest != nil {
+	if dest != nil && body != nil {
+		if len(body) <= 0 {
+			err = fmt.Errorf("error occured.")
+			return nil, err
+		}
 		err = json.Unmarshal(body, &dest)
 		if err != nil {
 			return nil, err
