@@ -103,7 +103,9 @@ func (r *serviceAccountResource) Schema(ctx context.Context, _ resource.SchemaRe
 
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Represents a service account created on MDS, can be used to create/update/delete/import a service account.\n" +
-			"Note: 1. Only service accounts with valid oAuthapp can be imported.\n2. Please make sure you have selected the valid policy with active clusters while creating the service account",
+			"Note: 1. Only service accounts with valid oAuthapp can be imported.\n" +
+			"2. Please make sure you have selected the valid policy with active clusters while creating the service account.\n" +
+			fmt.Sprintf("3. Default timeout for creation is `%v`.", defaultServiceAccCreateTimeout),
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "Auto-generated ID after creating an user, and can be passed to import an existing user from MDS to terraform state.",

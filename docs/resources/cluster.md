@@ -3,14 +3,19 @@
 page_title: "vmds_cluster Resource - vmds"
 subcategory: ""
 description: |-
-  Some attributes only used one-time for creation are: dedicated, network_policy_ids.
-  Changing only tags is supported at the moment. If you wish to update network policies associated with it, please refer resource: vmds_cluster_network_policies_association
+  Represents a service instance or cluster. Some attributes are used only once for creation, they are: dedicated, network_policy_ids.
+  Changing only tags is supported at the moment. If you wish to update network policies associated with it, please refer resource: vmds_cluster_network_policies_association.
+  Notes
+  Default timeout for creation is 20m0s.Default timeout for deletion is 5m0s.
 ---
 
 # vmds_cluster (Resource)
 
-Some attributes only used one-time for creation are: `dedicated`, `network_policy_ids`.
-Changing only `tags` is supported at the moment. If you wish to update network policies associated with it, please refer resource: `vmds_cluster_network_policies_association`
+Represents a service instance or cluster. Some attributes are used only once for creation, they are: `dedicated`, `network_policy_ids`.
+Changing only `tags` is supported at the moment. If you wish to update network policies associated with it, please refer resource: `vmds_cluster_network_policies_association`.
+## Notes
+1. Default timeout for creation is `20m0s`.
+2. Default timeout for deletion is `5m0s`.
 
 ## Example Usage
 
@@ -48,8 +53,9 @@ Please make use of datasource `vmds_network_ports` to decide on a size based on 
 ### Optional
 
 - `dedicated` (Boolean) If present and set to `true`, the cluster will get deployed on a dedicated data-plane in current Org.
-- `network_policy_ids` (Set of String) List of network policies to attach to the cluster.
+- `network_policy_ids` (Set of String) IDs of network policies to attach to the cluster.
 - `service_type` (String) Type of MDS Cluster to be created. Supported values: `RABBITMQ` .
+ Default is `RABBITMQ`.
 - `tags` (Set of String) Set of tags or labels to categorise the cluster.
 - `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
