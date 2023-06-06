@@ -4,11 +4,15 @@ page_title: "vmds_user Resource - vmds"
 subcategory: ""
 description: |-
   Represents an User registered on MDS, can be used to create/update/delete/import an user.
+  Notes
+  Default timeout for creation is 2m0s.
 ---
 
 # vmds_user (Resource)
 
 Represents an User registered on MDS, can be used to create/update/delete/import an user.
+## Notes
+- Default timeout for creation is `2m0s`.
 
 ## Example Usage
 

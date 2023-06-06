@@ -5,14 +5,16 @@ subcategory: ""
 description: |-
   Represents a service account created on MDS, can be used to create/update/delete/import a service account.
   Note: 1. Only service accounts with valid oAuthapp can be imported.
-  2. Please make sure you have selected the valid policy with active clusters while creating the service account
+  2. Please make sure you have selected the valid policy with active clusters while creating the service account.
+  3. Default timeout for creation is 2m0s.
 ---
 
 # vmds_service_account (Resource)
 
 Represents a service account created on MDS, can be used to create/update/delete/import a service account.
 Note: 1. Only service accounts with valid oAuthapp can be imported.
-2. Please make sure you have selected the valid policy with active clusters while creating the service account
+2. Please make sure you have selected the valid policy with active clusters while creating the service account.
+3. Default timeout for creation is `2m0s`.
 
 ## Example Usage
 
@@ -25,6 +27,14 @@ resource "vmds_service_account" "example" {
   // non editable fields
   lifecycle {
     ignore_changes = [name]
+  }
+  //Oauth app details
+  oauth_app = {
+    description = "Oauth app created for example-acc service account"
+    ttl_spec    = {
+      ttl       = "1"
+      time_unit = "HOURS"
+    }
   }
 }
 ```
