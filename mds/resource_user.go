@@ -85,7 +85,9 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 	tflog.Info(ctx, "INIT__Schema")
 
 	resp.Schema = schema.Schema{
-		Description: "Represents an User registered on MDS, can be used to create/update/delete/import an user.",
+		MarkdownDescription: "Represents an User registered on MDS, can be used to create/update/delete/import an user.\n" +
+			"## Notes\n" +
+			fmt.Sprintf("- Default timeout for creation is `%v`.", defaultUserCreateTimeout),
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "Auto-generated ID after creating an user, and can be passed to import an existing user from MDS to terraform state.",
@@ -136,6 +138,7 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 			"service_roles": schema.ListNestedAttribute{
 				Description: "Roles that determines access level inside services on MDS.",
 				Computed:    true,
+				Optional:    false,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"role_id": schema.StringAttribute{
@@ -152,6 +155,7 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 			"org_roles": schema.ListNestedAttribute{
 				Description: "Roles that determines access level of the user on MDS.",
 				Computed:    true,
+				Optional:    false,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"role_id": schema.StringAttribute{
