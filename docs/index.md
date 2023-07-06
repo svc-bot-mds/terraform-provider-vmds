@@ -15,6 +15,10 @@ Interact with VMware Managed Data Services
 ```terraform
 provider "vmds" {
   host      = "https://console.mds.vmware.com"
+  // Get the authentication token using api_token
+  api_token ="MDS_API_TOKEN"
+
+  //Get the authentication token using client_id, client_secret and org_id associated with the service account
   client_id = "MDS_CLIENT_ID"
   client_secret = "MDS_CLIENT_SECRET"
   org_id = "MDS_ORG_ID"
@@ -27,10 +31,12 @@ provider "vmds" {
 
 ### Required
 
-- `client_id` (String, Sensitive) Client Id for MDS API. May also be provided via MDS_CLIENT_ID environment variable.
-- `client_secret` (String, Sensitive) Client Secret for MDS API. May also be provided via MDS_CLIENT_SECRET environment variable.
-- `org_id` (String, Sensitive) Organization Id for MDS API. May also be provided via MDS_ORG_ID environment variable.
+- `type` (String) OAuthType for the MDS API. It Can be 'api_token' or 'client_credentials'
 
 ### Optional
 
+- `api_token` (String, Sensitive) API Token for MDS API. May also be provided via MDS_API_TOKEN environment variable.
+- `client_id` (String, Sensitive) Client Id for MDS API. May also be provided via MDS_CLIENT_ID environment variable.
+- `client_secret` (String, Sensitive) Client Secret for MDS API. May also be provided via MDS_CLIENT_SECRET environment variable.
 - `host` (String) URI for MDS API. May also be provided via MDS_HOST environment variable.
+- `org_id` (String, Sensitive) Organization Id for MDS API. May also be provided via MDS_ORG_ID environment variable.
