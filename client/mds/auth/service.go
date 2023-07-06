@@ -22,8 +22,14 @@ func NewService(hostUrl *string, root *core.Root) *Service {
 
 // GetAccessToken - Get a new token for user
 func (s *Service) GetAccessToken() (*TokenResponse, error) {
-	if s.Api.AuthToUse.ApiToken == "" {
-		return nil, fmt.Errorf("define API Token")
+	if s.Api.AuthToUse.ClientId == "" {
+		return nil, fmt.Errorf("define MDS Client Id")
+	}
+	if s.Api.AuthToUse.ClientSecret == "" {
+		return nil, fmt.Errorf("define MDS Client Secret")
+	}
+	if s.Api.AuthToUse.OrgId == "" {
+		return nil, fmt.Errorf("define MDS Org Id")
 	}
 
 	reqUrl := fmt.Sprintf("%s/%s", s.Endpoint, Token)
@@ -36,6 +42,7 @@ func (s *Service) GetAccessToken() (*TokenResponse, error) {
 		OAuthAppTypes: s.Api.AuthToUse.OAuthAppType,
 		OrgId:         s.Api.AuthToUse.OrgId,
 	}
+	s.Api.OrgId = s.Api.AuthToUse.OrgId
 	body, err := s.Api.Post(&reqUrl, &tokenRequest, nil)
 	if err != nil {
 		return nil, err
@@ -59,8 +66,5 @@ func (s *Service) processAuthResponse(response *TokenResponse) error {
 	if token == nil {
 		return err
 	}
-	claims, _ := token.Claims.(jwt.MapClaims)
-
-	s.Api.OrgId = claims["context_name"].(string)
 	return nil
 }
