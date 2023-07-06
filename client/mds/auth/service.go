@@ -23,13 +23,13 @@ func NewService(hostUrl *string, root *core.Root) *Service {
 // GetAccessToken - Get a new token for user
 func (s *Service) GetAccessToken() (*TokenResponse, error) {
 	if s.Api.AuthToUse.ClientId == "" {
-		return nil, fmt.Errorf("define API Client Id")
+		return nil, fmt.Errorf("define MDS Client Id")
 	}
 	if s.Api.AuthToUse.ClientSecret == "" {
-		return nil, fmt.Errorf("define API Client Secret")
+		return nil, fmt.Errorf("define MDS Client Secret")
 	}
 	if s.Api.AuthToUse.OrgId == "" {
-		return nil, fmt.Errorf("define API Org Id")
+		return nil, fmt.Errorf("define MDS Org Id")
 	}
 
 	reqUrl := fmt.Sprintf("%s/%s", s.Endpoint, Token)
