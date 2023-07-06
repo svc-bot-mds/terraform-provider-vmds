@@ -3,6 +3,7 @@ package auth
 import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/svc-bot-mds/terraform-provider-vmds/client/constants/oauth_type"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds/core"
 )
 
@@ -22,13 +23,17 @@ func NewService(hostUrl *string, root *core.Root) *Service {
 
 // GetAccessToken - Get a new token for user
 func (s *Service) GetAccessToken() (*TokenResponse, error) {
-	if s.Api.AuthToUse.ClientId == "" {
+	if s.Api.AuthToUse.ApiToken == "" && s.Api.AuthToUse.OAuthAppType == oauth_type.ApiToken {
+		return nil, fmt.Errorf("define API Token")
+	}
+
+	if s.Api.AuthToUse.ClientId == "" && s.Api.AuthToUse.OAuthAppType == oauth_type.ClientCredentials {
 		return nil, fmt.Errorf("define MDS Client Id")
 	}
-	if s.Api.AuthToUse.ClientSecret == "" {
+	if s.Api.AuthToUse.ClientSecret == "" && s.Api.AuthToUse.OAuthAppType == oauth_type.ClientCredentials {
 		return nil, fmt.Errorf("define MDS Client Secret")
 	}
-	if s.Api.AuthToUse.OrgId == "" {
+	if s.Api.AuthToUse.OrgId == "" && s.Api.AuthToUse.OAuthAppType == oauth_type.ClientCredentials {
 		return nil, fmt.Errorf("define MDS Org Id")
 	}
 
@@ -42,7 +47,9 @@ func (s *Service) GetAccessToken() (*TokenResponse, error) {
 		OAuthAppTypes: s.Api.AuthToUse.OAuthAppType,
 		OrgId:         s.Api.AuthToUse.OrgId,
 	}
-	s.Api.OrgId = s.Api.AuthToUse.OrgId
+	if s.Api.AuthToUse.OAuthAppType == oauth_type.ClientCredentials {
+		s.Api.OrgId = s.Api.AuthToUse.OrgId
+	}
 	body, err := s.Api.Post(&reqUrl, &tokenRequest, nil)
 	if err != nil {
 		return nil, err
@@ -66,5 +73,11 @@ func (s *Service) processAuthResponse(response *TokenResponse) error {
 	if token == nil {
 		return err
 	}
+	if s.Api.AuthToUse.OAuthAppType == oauth_type.ApiToken {
+		claims, _ := token.Claims.(jwt.MapClaims)
+
+		s.Api.OrgId = claims["context_name"].(string)
+	}
+
 	return nil
 }
