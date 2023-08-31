@@ -219,7 +219,6 @@ func (r *serviceAccountResource) Schema(ctx context.Context, _ resource.SchemaRe
 			"credential": schema.SingleNestedAttribute{
 				MarkdownDescription: "Holds the Client Secret details.",
 				Computed:            true,
-				Optional:            true,
 				CustomType: types.ObjectType{
 					AttrTypes: map[string]attr.Type{
 						"client_id":     types.StringType,
@@ -259,7 +258,6 @@ func (r *serviceAccountResource) Create(ctx context.Context, req resource.Create
 	// Retrieve values from plan
 	var plan serviceAccountResourceModel
 	diags := req.Plan.Get(ctx, &plan)
-
 	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
@@ -335,19 +333,29 @@ func (r *serviceAccountResource) Create(ctx context.Context, req resource.Create
 	}
 
 	var serviceAccountOauthAppPlan = convertToOauthAppModel(ctx, &plan)
+
+	var ttl int64
+	var timeunit string
 	if serviceAccountOauthAppPlan.TTLSpec.TTL.ValueInt64() != svcAccountsOauthApps.TTLSpec.TTL ||
 		serviceAccountOauthAppPlan.Description.ValueString() != svcAccountsOauthApps.Description ||
 		serviceAccountOauthAppPlan.TTLSpec.TimeUnit.ValueString() != svcAccountsOauthApps.TTLSpec.TimeUnit {
+		if serviceAccountOauthAppPlan.TTLSpec.TTL.ValueInt64() == 0 {
+			ttl = 30
+			timeunit = time_unit.MINUTES
+		} else {
+			ttl = serviceAccountOauthAppPlan.TTLSpec.TTL.ValueInt64()
+			timeunit = serviceAccountOauthAppPlan.TTLSpec.TimeUnit.ValueString()
+		}
 		updateRequest := customer_metadata.MDSOauthAppUpdateRequest{
 			Description: serviceAccountOauthAppPlan.Description.ValueString(),
-			TTL:         serviceAccountOauthAppPlan.TTLSpec.TTL.ValueInt64(),
-			TimeUnit:    serviceAccountOauthAppPlan.TTLSpec.TimeUnit.ValueString(),
+			TTL:         ttl,
+			TimeUnit:    timeunit,
 		}
 		svcAccountsOauthApps, err = r.client.CustomerMetadata.UpdateMDSServiceAccountOauthApp(createdSvcAcct.Id, &updateRequest, svcAccountsOauthApps.AppId)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Creating MDS service account - Oauth App details",
-				"Could not update service account - oauth app details, unexpected error: "+err.Error(),
+				"Could not create service account - oauth app details, unexpected error: "+err.Error(),
 			)
 			return
 		}
@@ -632,6 +640,27 @@ func saveFromSvcAccountCreateResponseFromUpdate(ctx *context.Context, diagnostic
 		ttlSpecModel := TTLSpecModel{
 			TimeUnit: types.StringValue(svcAccountsOauthApps.TTLSpec.TimeUnit),
 			TTL:      types.Int64Value(svcAccountsOauthApps.TTLSpec.TTL),
+		}
+		oauthAppModel.TTLSpec = ttlSpecModel
+		oauthObject, diags := types.ObjectValueFrom(*ctx, state.OauthApp.AttributeTypes(*ctx), oauthAppModel)
+		if diagnostics.Append(diags...); diagnostics.HasError() {
+			return 1
+		}
+
+		state.OauthApp = oauthObject
+	} else {
+		oauthAppModel := ServiceAccountOauthApp{
+			OauthAppId:  types.StringValue(""),
+			AppType:     types.StringValue(""),
+			Created:     types.StringValue(""),
+			CreatedBy:   types.StringValue(""),
+			Description: types.StringValue(""),
+			Modified:    types.StringValue(""),
+			ModifiedBy:  types.StringValue(""),
+		}
+		ttlSpecModel := TTLSpecModel{
+			TimeUnit: types.StringValue(time_unit.MINUTES),
+			TTL:      types.Int64Value(30),
 		}
 
 		oauthAppModel.TTLSpec = ttlSpecModel
