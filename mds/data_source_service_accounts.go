@@ -80,6 +80,7 @@ func (d *serviceAccountsDatasource) Schema(_ context.Context, _ datasource.Schem
 // Read refreshes the Terraform state with the latest data.
 func (d *serviceAccountsDatasource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var state serviceAccountsDatasourceModel
+	var serviceAccountList []serviceAccountModel
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 
@@ -93,15 +94,42 @@ func (d *serviceAccountsDatasource) Read(ctx context.Context, req datasource.Rea
 		)
 		return
 	}
-	for _, serviceAccountDto := range *serviceAccounts.Get() {
-		tflog.Info(ctx, "Converting svc account dto")
-		serviceAccount := serviceAccountModel{
-			ID:     types.StringValue(serviceAccountDto.Id),
-			Name:   types.StringValue(serviceAccountDto.Name),
-			Status: types.StringValue(serviceAccountDto.Status),
+
+	if serviceAccounts.Page.TotalPages > 1 {
+		for i := 1; i <= serviceAccounts.Page.TotalPages; i++ {
+			query.PageQuery.Index = i - 1
+			totalServiceAccounts, err := d.client.CustomerMetadata.GetMdsServiceAccounts(query)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Unable to Read MDS Service Accounts",
+					err.Error(),
+				)
+				return
+			}
+
+			for _, serviceAccountDto := range *totalServiceAccounts.Get() {
+				serviceAccount := serviceAccountModel{
+					ID:     types.StringValue(serviceAccountDto.Id),
+					Name:   types.StringValue(serviceAccountDto.Name),
+					Status: types.StringValue(serviceAccountDto.Status),
+				}
+				serviceAccountList = append(serviceAccountList, serviceAccount)
+			}
 		}
-		tflog.Debug(ctx, "converted service Account dto", map[string]interface{}{"dto": serviceAccount})
-		state.ServiceAccounts = append(state.ServiceAccounts, serviceAccount)
+
+		tflog.Debug(ctx, "service accounts dto", map[string]interface{}{"dto": serviceAccountList})
+		state.ServiceAccounts = append(state.ServiceAccounts, serviceAccountList...)
+	} else {
+		for _, serviceAccountDto := range *serviceAccounts.Get() {
+			tflog.Info(ctx, "Converting svc account dto")
+			serviceAccount := serviceAccountModel{
+				ID:     types.StringValue(serviceAccountDto.Id),
+				Name:   types.StringValue(serviceAccountDto.Name),
+				Status: types.StringValue(serviceAccountDto.Status),
+			}
+			tflog.Debug(ctx, "converted service Account dto", map[string]interface{}{"dto": serviceAccount})
+			state.ServiceAccounts = append(state.ServiceAccounts, serviceAccount)
+		}
 	}
 	state.Id = types.StringValue(common.DataSource + common.ServiceAccountsId)
 	// Set state
