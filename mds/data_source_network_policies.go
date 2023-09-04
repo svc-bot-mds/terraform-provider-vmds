@@ -82,6 +82,7 @@ func (d *networkPoliciesDatasource) Schema(_ context.Context, _ datasource.Schem
 // Read refreshes the Terraform state with the latest data.
 func (d *networkPoliciesDatasource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var state networkPoliciesDataSourceModel
+	var networkPolicyList []networkPoliciesModel
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 
@@ -99,13 +100,38 @@ func (d *networkPoliciesDatasource) Read(ctx context.Context, req datasource.Rea
 		return
 	}
 
-	for _, mdsPolicyDTO := range *nwPolicies.Get() {
-		networkPolicy := networkPoliciesModel{
-			ID:   types.StringValue(mdsPolicyDTO.ID),
-			Name: types.StringValue(mdsPolicyDTO.Name),
+	if nwPolicies.Page.TotalPages > 1 {
+		for i := 1; i <= nwPolicies.Page.TotalPages; i++ {
+			query.PageQuery.Index = i - 1
+			totalPolicies, err := d.client.CustomerMetadata.GetPolicies(query)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Unable to Read MDS Policies",
+					err.Error(),
+				)
+				return
+			}
+
+			for _, mdsPolicyDTO := range *totalPolicies.Get() {
+				policy := networkPoliciesModel{
+					ID:   types.StringValue(mdsPolicyDTO.ID),
+					Name: types.StringValue(mdsPolicyDTO.Name),
+				}
+				networkPolicyList = append(networkPolicyList, policy)
+			}
 		}
-		tflog.Debug(ctx, "nwPolicy dto", map[string]interface{}{"dto": networkPolicy})
-		state.Policies = append(state.Policies, networkPolicy)
+
+		tflog.Debug(ctx, "rabbitmq dto", map[string]interface{}{"dto": networkPolicyList})
+		state.Policies = append(state.Policies, networkPolicyList...)
+	} else {
+		for _, mdsPolicyDTO := range *nwPolicies.Get() {
+			networkPolicy := networkPoliciesModel{
+				ID:   types.StringValue(mdsPolicyDTO.ID),
+				Name: types.StringValue(mdsPolicyDTO.Name),
+			}
+			tflog.Debug(ctx, "nwPolicy dto", map[string]interface{}{"dto": networkPolicy})
+			state.Policies = append(state.Policies, networkPolicy)
+		}
 	}
 
 	state.Id = types.StringValue(common.DataSource + common.NetworkPoliciesId)
