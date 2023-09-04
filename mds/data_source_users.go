@@ -81,6 +81,7 @@ func (d *usersDatasource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 // Read refreshes the Terraform state with the latest data.
 func (d *usersDatasource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var state usersDataSourceModel
+	var userList []userModel
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 
@@ -95,15 +96,42 @@ func (d *usersDatasource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	for _, userAccountDto := range *users.Get() {
-		user := userModel{
-			ID:    types.StringValue(userAccountDto.Id),
-			Name:  types.StringValue(userAccountDto.Name),
-			Email: types.StringValue(userAccountDto.Email),
+	if users.Page.TotalPages > 1 {
+		for i := 1; i <= users.Page.TotalPages; i++ {
+			query.PageQuery.Index = i - 1
+			totalUsers, err := d.client.CustomerMetadata.GetMdsUsers(query)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Unable to Read MDS User Accounts",
+					err.Error(),
+				)
+				return
+			}
+
+			for _, userAccountDto := range *totalUsers.Get() {
+				user := userModel{
+					ID:    types.StringValue(userAccountDto.Id),
+					Name:  types.StringValue(userAccountDto.Name),
+					Email: types.StringValue(userAccountDto.Email),
+				}
+				userList = append(userList, user)
+			}
 		}
-		tflog.Debug(ctx, "converted userAccount dto", map[string]interface{}{"dto": user})
-		state.Users = append(state.Users, user)
+
+		tflog.Debug(ctx, "users dto", map[string]interface{}{"dto": userList})
+		state.Users = append(state.Users, userList...)
+	} else {
+		for _, userAccountDto := range *users.Get() {
+			user := userModel{
+				ID:    types.StringValue(userAccountDto.Id),
+				Name:  types.StringValue(userAccountDto.Name),
+				Email: types.StringValue(userAccountDto.Email),
+			}
+			tflog.Debug(ctx, "converted userAccount dto", map[string]interface{}{"dto": user})
+			state.Users = append(state.Users, user)
+		}
 	}
+
 	state.Id = types.StringValue(common.DataSource + common.UsersId)
 	// Set state
 	diags := resp.State.Set(ctx, &state)
