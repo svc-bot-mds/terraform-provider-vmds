@@ -57,7 +57,7 @@ func (p *mdsProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *
 				Optional:    true,
 			},
 			"type": schema.StringAttribute{
-				Description: "OAuthType for the MDS API. It Can be 'api_token' or 'client_credentials'",
+				Description: "OAuthType for the MDS API. It can be 'api_token' or 'client_credentials'",
 				Required:    true,
 			},
 			"api_token": schema.StringAttribute{
@@ -68,7 +68,6 @@ func (p *mdsProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *
 			"client_id": schema.StringAttribute{
 				Description: "Client Id for MDS API. May also be provided via MDS_CLIENT_ID environment variable.",
 				Optional:    true,
-				Sensitive:   true,
 			},
 			"client_secret": schema.StringAttribute{
 				Description: "Client Secret for MDS API. May also be provided via MDS_CLIENT_SECRET environment variable.",
@@ -78,7 +77,6 @@ func (p *mdsProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *
 			"org_id": schema.StringAttribute{
 				Description: "Organization Id for MDS API. May also be provided via MDS_ORG_ID environment variable.",
 				Optional:    true,
-				Sensitive:   true,
 			},
 		},
 	}
@@ -110,10 +108,10 @@ func (p *mdsProvider) Configure(ctx context.Context, req provider.ConfigureReque
 	if config.Type.ValueString() == oauth_type.ApiToken {
 		if config.ApiToken.IsUnknown() {
 			resp.Diagnostics.AddAttributeError(
-				path.Root("password"),
-				"Unknown MDS API Password",
-				"The provider cannot create the MDS API client as there is an unknown configuration value for the MDS API password. "+
-					"Either target apply the source of the value first, set the value statically in the configuration, or use the MDS_PASSWORD environment variable.",
+				path.Root("ApiToken"),
+				"Unknown MDS API Token",
+				"The provider cannot create the MDS API client as there is an unknown configuration value for the MDS API Token. "+
+					"Either target apply the source of the value first, set the value statically in the configuration, or use the MDS_API_TOKEN environment variable.",
 			)
 		}
 	}
@@ -130,8 +128,8 @@ func (p *mdsProvider) Configure(ctx context.Context, req provider.ConfigureReque
 
 		if config.ClientSecret.IsUnknown() {
 			resp.Diagnostics.AddAttributeError(
-				path.Root("password"),
-				"Unknown MDS API Password",
+				path.Root("client_secret"),
+				"Unknown MDS API Client Secret",
 				"The provider cannot create the MDS API client as there is an unknown configuration value for the MDS API password. "+
 					"Either target apply the source of the value first, set the value statically in the configuration, or use the MDS_CLIENT_SECRET environment variable.",
 			)
@@ -204,35 +202,36 @@ func (p *mdsProvider) Configure(ctx context.Context, req provider.ConfigureReque
 				"If either is already set, ensure the value is not empty.",
 		)
 	}
+	if config.Type.ValueString() == oauth_type.ClientCredentials {
+		if clientId == "" {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("client_id"),
+				"Missing MDS API Client Id",
+				"The provider cannot create the MDS API client as there is a missing or empty value for the MDS API Client Id. "+
+					"Set the password value in the configuration or use the MDS_CLIENT_ID environment variable. "+
+					"If either is already set, ensure the value is not empty.",
+			)
+		}
 
-	if clientId == "" && config.Type.ValueString() == oauth_type.ClientCredentials {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("client_id"),
-			"Missing MDS API Client Id",
-			"The provider cannot create the MDS API client as there is a missing or empty value for the MDS API Client Id. "+
-				"Set the password value in the configuration or use the MDS_CLIENT_ID environment variable. "+
-				"If either is already set, ensure the value is not empty.",
-		)
-	}
+		if clientSecret == "" {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("client_secret"),
+				"Missing MDS API Client Secret",
+				"The provider cannot create the MDS API client as there is a missing or empty value for the MDS API Client Secret. "+
+					"Set the password value in the configuration or use the MDS_CLIENT_SECRET environment variable. "+
+					"If either is already set, ensure the value is not empty.",
+			)
+		}
 
-	if clientSecret == "" && config.Type.ValueString() == oauth_type.ClientCredentials {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("client_secret"),
-			"Missing MDS API Client Secret",
-			"The provider cannot create the MDS API client as there is a missing or empty value for the MDS API Client Secret. "+
-				"Set the password value in the configuration or use the MDS_CLIENT_SECRET environment variable. "+
-				"If either is already set, ensure the value is not empty.",
-		)
-	}
-
-	if orgId == "" && config.Type.ValueString() == oauth_type.ClientCredentials {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("org_id"),
-			"Missing MDS API Org Id",
-			"The provider cannot create the MDS API client as there is a missing or empty value for the MDS API Org Id. "+
-				"Set the password value in the configuration or use the MDS_ORG_ID environment variable. "+
-				"If either is already set, ensure the value is not empty.",
-		)
+		if orgId == "" {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("org_id"),
+				"Missing MDS API Org Id",
+				"The provider cannot create the MDS API client as there is a missing or empty value for the MDS API Org Id. "+
+					"Set the password value in the configuration or use the MDS_ORG_ID environment variable. "+
+					"If either is already set, ensure the value is not empty.",
+			)
+		}
 	}
 
 	if resp.Diagnostics.HasError() {

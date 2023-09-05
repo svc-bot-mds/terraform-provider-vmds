@@ -33,6 +33,7 @@ provider "vmds" {
 
 - `type` (String) OAuthType for the MDS API. It Can be 'api_token' or 'client_credentials'
 
+
 ### Optional
 
 - `api_token` (String, Sensitive) API Token for MDS API. May also be provided via MDS_API_TOKEN environment variable.
