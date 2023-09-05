@@ -303,6 +303,7 @@ func (p *mdsProvider) Resources(_ context.Context) []func() resource.Resource {
 		NewUserResource,
 		NewServiceAccountResource,
 		NewPolicyResource,
+		NewNetworkPolicyResource,
 	}
 }
 

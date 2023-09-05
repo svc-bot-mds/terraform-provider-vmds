@@ -3,6 +3,7 @@ package mds
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -12,47 +13,45 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/constants/policy_type"
-	"github.com/svc-bot-mds/terraform-provider-vmds/client/constants/service_type"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
 	customer_metadata "github.com/svc-bot-mds/terraform-provider-vmds/client/mds/customer-metadata"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/model"
-	"sort"
+	"regexp"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource                = &policyResource{}
-	_ resource.ResourceWithConfigure   = &policyResource{}
-	_ resource.ResourceWithImportState = &policyResource{}
+	_ resource.Resource                = &networkPolicyResource{}
+	_ resource.ResourceWithConfigure   = &networkPolicyResource{}
+	_ resource.ResourceWithImportState = &networkPolicyResource{}
 )
 
-func NewPolicyResource() resource.Resource {
-	return &policyResource{}
+func NewNetworkPolicyResource() resource.Resource {
+	return &networkPolicyResource{}
 }
 
-type policyResource struct {
+type networkPolicyResource struct {
 	client *mds.Client
 }
 
-type policyResourceModel struct {
-	ID              types.String           `tfsdk:"id"`
-	Name            types.String           `tfsdk:"name"`
-	ServiceType     types.String           `tfsdk:"service_type"`
-	PermissionSpecs []*PermissionSpecModel `tfsdk:"permission_specs"`
-	ResourceIds     types.Set              `tfsdk:"resource_ids"`
+type networkPolicyResourceModel struct {
+	ID          types.String      `tfsdk:"id"`
+	Name        types.String      `tfsdk:"name"`
+	ServiceType types.String      `tfsdk:"service_type"`
+	NetworkSpec *NetworkSpecModel `tfsdk:"network_spec"`
+	ResourceIds types.Set         `tfsdk:"resource_ids"`
 }
 
-type PermissionSpecModel struct {
-	Role        types.String `tfsdk:"role"`
-	Resource    types.String `tfsdk:"resource"`
-	Permissions types.Set    `tfsdk:"permissions"`
+type NetworkSpecModel struct {
+	Cidr           types.String `tfsdk:"cidr"`
+	NetworkPortIds types.Set    `tfsdk:"network_port_ids"`
 }
 
-func (r *policyResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_policy"
+func (r *networkPolicyResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_network_policy"
 }
 
-func (r *policyResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *networkPolicyResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -71,7 +70,7 @@ func (r *policyResource) Configure(_ context.Context, req resource.ConfigureRequ
 }
 
 // Schema defines the schema for the resource.
-func (r *policyResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *networkPolicyResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	tflog.Info(ctx, "INIT__Schema")
 
 	resp.Schema = schema.Schema{
@@ -84,37 +83,39 @@ func (r *policyResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"service_type": schema.StringAttribute{
+				MarkdownDescription: "Type of policy to manage. Supported values is:  `NETWORK`.",
+				Required:            true,
+			},
 			"name": schema.StringAttribute{
 				Description: "Name of the policy",
 				Required:    true,
-			},
-			"service_type": schema.StringAttribute{
-				MarkdownDescription: "Type of policy to manage. Supported values are: `RABBITMQ`, `NETWORK`.",
-				Required:            true,
 			},
 			"resource_ids": schema.SetAttribute{
 				Description: "IDs of service resources/instances being managed by the policy.",
 				Computed:    true,
 				ElementType: types.StringType,
 			},
-			"permission_specs": schema.ListNestedAttribute{
-				MarkdownDescription: "Permissions to enforce on service resources. Only required for policies other than `NETWORK` type.",
+			"network_spec": schema.SingleNestedAttribute{
+				MarkdownDescription: "Network config to allow access to service resource.",
 				Required:            true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"role": schema.StringAttribute{
-							MarkdownDescription: "One or more of (monitoring,write,management,policymaker,read,configure). Please make use of datasource `vmds_service_roles` to get roles.",
-							Required:            true,
+				CustomType: types.ObjectType{
+					AttrTypes: map[string]attr.Type{
+						"cidr": types.StringType,
+						"network_port_ids": types.SetType{
+							ElemType: types.StringType,
 						},
-						"resource": schema.StringAttribute{
-							MarkdownDescription: "The cluster/instance name. Please make use of datasource `vmds_clusters` to get resource.",
-							Required:            true,
-						},
-						"permissions": schema.SetAttribute{
-							MarkdownDescription: "One or more of (monitoring,write,management,policymaker,read,configure). Please make use of datasource `vmds_service_roles` to get roles.",
-							Required:            true,
-							ElementType:         types.StringType,
-						},
+					},
+				},
+				Attributes: map[string]schema.Attribute{
+					"cidr": schema.StringAttribute{
+						MarkdownDescription: "CIDR value to allow access from. Ex: `10.45.66.80/30`",
+						Required:            true,
+					},
+					"network_port_ids": schema.SetAttribute{
+						MarkdownDescription: "IDs of network ports to open up for access. Please make use of datasource `vmds_network_ports` to get IDs of ports available for services.",
+						Required:            true,
+						ElementType:         types.StringType,
 					},
 				},
 			},
@@ -125,46 +126,42 @@ func (r *policyResource) Schema(ctx context.Context, _ resource.SchemaRequest, r
 }
 
 // Create a new resource
-func (r *policyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *networkPolicyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	tflog.Info(ctx, "INIT__Create")
 	// Retrieve values from plan
-	var plan policyResourceModel
+	var plan networkPolicyResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 
 	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
 
-	rolesReq := make([]customer_metadata.MdsPermissionSpec, len(plan.PermissionSpecs))
-
 	// Generate API request body from plan
 	policyRequest := customer_metadata.MdsCreateUpdatePolicyRequest{
 		Name:        plan.Name.ValueString(),
-		ServiceType: plan.ServiceType.ValueString(),
+		ServiceType: policy_type.NETWORK,
 	}
-	for i, roleId := range plan.PermissionSpecs {
 
-		rolesReq[i] = customer_metadata.MdsPermissionSpec{
-			Role:     roleId.Role.ValueString(),
-			Resource: roleId.Resource.ValueString(),
-		}
-		roleId.Permissions.ElementsAs(ctx, &rolesReq[i].Permissions, true)
+	networkSpec := &customer_metadata.MdsNetworkSpec{
+		Cidr: plan.NetworkSpec.Cidr.ValueString(),
 	}
-	sort.Slice(rolesReq, func(i, j int) bool { return rolesReq[i].Role < rolesReq[j].Role })
-	policyRequest.PermissionsSpec = rolesReq
+	tflog.Debug(ctx, "Create Network Policy DTO", map[string]interface{}{"dto": plan.NetworkSpec.NetworkPortIds})
 
-	tflog.Debug(ctx, "Create Policy DTO", map[string]interface{}{"dto": policyRequest})
+	plan.NetworkSpec.NetworkPortIds.ElementsAs(ctx, &networkSpec.NetworkPortIds, true)
+	policyRequest.NetworkSpecs = append(policyRequest.NetworkSpecs, networkSpec)
+
+	tflog.Debug(ctx, "Create Network Policy DTO", map[string]interface{}{"dto": policyRequest})
 	if _, err := r.client.CustomerMetadata.CreatePolicy(&policyRequest); err != nil {
 
 		resp.Diagnostics.AddError(
-			"Submitting request to create Policy",
-			"Could not create Policy, unexpected error: "+err.Error(),
+			"Submitting request to create Network Policy",
+			"Could not create Network Policy, unexpected error: "+err.Error(),
 		)
 		return
 	}
 
 	policies, err := r.client.CustomerMetadata.GetPolicies(&customer_metadata.MdsPoliciesQuery{
-		Type:  plan.ServiceType.ValueString(),
+		Type:  policy_type.NETWORK,
 		Names: []string{plan.Name.ValueString()},
 	})
 	if err != nil {
@@ -182,7 +179,7 @@ func (r *policyResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 	createdPolicy := &(*policies.Get())[0]
 	tflog.Debug(ctx, "Created Policy DTO", map[string]interface{}{"dto": createdPolicy})
-	if saveFromPolicyResponse(&ctx, &resp.Diagnostics, &plan, createdPolicy) != 0 {
+	if saveFromNetworkPolicyResponse(&ctx, &resp.Diagnostics, &plan, createdPolicy) != 0 {
 		return
 	}
 
@@ -196,11 +193,11 @@ func (r *policyResource) Create(ctx context.Context, req resource.CreateRequest,
 	tflog.Info(ctx, "END__Create")
 }
 
-func (r *policyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *networkPolicyResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	tflog.Info(ctx, "INIT__Update")
 
 	// Retrieve values from plan
-	var plan policyResourceModel
+	var plan networkPolicyResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -210,27 +207,22 @@ func (r *policyResource) Update(ctx context.Context, req resource.UpdateRequest,
 	// Generate API request body from plan
 	updateRequest := customer_metadata.MdsCreateUpdatePolicyRequest{
 		Name:        plan.Name.ValueString(),
-		ServiceType: plan.ServiceType.ValueString(),
+		ServiceType: policy_type.NETWORK,
 	}
-	permissionSpecRequest := make([]customer_metadata.MdsPermissionSpec, len(plan.PermissionSpecs))
 
-	if plan.ServiceType.ValueString() == policy_type.RABBITMQ {
-		for i, roleId := range plan.PermissionSpecs {
-			permissionSpecRequest[i] = customer_metadata.MdsPermissionSpec{
-				Role:     roleId.Role.ValueString(),
-				Resource: roleId.Resource.ValueString(),
-			}
-			roleId.Permissions.ElementsAs(ctx, &permissionSpecRequest[i].Permissions, true)
-		}
-		updateRequest.PermissionsSpec = permissionSpecRequest
+	networkSpec := &customer_metadata.MdsNetworkSpec{
+		Cidr: plan.NetworkSpec.Cidr.ValueString(),
 	}
+	plan.NetworkSpec.NetworkPortIds.ElementsAs(ctx, &networkSpec.NetworkPortIds, true)
+	updateRequest.NetworkSpecs = append(updateRequest.NetworkSpecs, networkSpec)
+
 	tflog.Debug(ctx, "update policy request dto", map[string]interface{}{"dto": updateRequest})
 
 	// Update existing policy
 	if err := r.client.CustomerMetadata.UpdateMdsPolicy(plan.ID.ValueString(), &updateRequest); err != nil {
 		resp.Diagnostics.AddError(
-			"Updating MDS Policy",
-			"Could not update Policy, unexpected error: "+err.Error(),
+			"Updating  Network Policy",
+			"Could not update Network Policy, unexpected error: "+err.Error(),
 		)
 		return
 	}
@@ -244,7 +236,7 @@ func (r *policyResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	//Update resource state with updated items and timestamp
-	if saveFromPolicyResponse(&ctx, &resp.Diagnostics, &plan, policy) != 0 {
+	if saveFromNetworkPolicyResponse(&ctx, &resp.Diagnostics, &plan, policy) != 0 {
 		return
 	}
 
@@ -257,10 +249,10 @@ func (r *policyResource) Update(ctx context.Context, req resource.UpdateRequest,
 	tflog.Info(ctx, "END__Update")
 }
 
-func (r *policyResource) Delete(ctx context.Context, request resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *networkPolicyResource) Delete(ctx context.Context, request resource.DeleteRequest, resp *resource.DeleteResponse) {
 	tflog.Info(ctx, "INIT__Delete")
 	// Get current state
-	var state policyResourceModel
+	var state networkPolicyResourceModel
 	diags := request.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -280,14 +272,14 @@ func (r *policyResource) Delete(ctx context.Context, request resource.DeleteRequ
 	tflog.Info(ctx, "END__Delete")
 }
 
-func (r *policyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *networkPolicyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	// Retrieve import ID and save to id attribute
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
-func (r *policyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *networkPolicyResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	tflog.Info(ctx, "INIT__Read")
 	// Get current state
-	var state policyResourceModel
+	var state networkPolicyResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -298,14 +290,14 @@ func (r *policyResource) Read(ctx context.Context, req resource.ReadRequest, res
 	policy, err := r.client.CustomerMetadata.GetMDSPolicy(state.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Reading MDS Policy",
-			"Could not read MDS policy ID "+state.ID.ValueString()+": "+err.Error(),
+			"Reading Network Policy",
+			"Could not read Network policy ID "+state.ID.ValueString()+": "+err.Error(),
 		)
 		return
 	}
 
 	// Overwrite items with refreshed state
-	if saveFromPolicyResponse(&ctx, &resp.Diagnostics, &state, policy) != 0 {
+	if saveFromNetworkPolicyResponse(&ctx, &resp.Diagnostics, &state, policy) != 0 {
 		return
 	}
 
@@ -319,21 +311,18 @@ func (r *policyResource) Read(ctx context.Context, req resource.ReadRequest, res
 	tflog.Info(ctx, "END__Read")
 }
 
-func saveFromPolicyResponse(ctx *context.Context, diagnostics *diag.Diagnostics, state *policyResourceModel, policy *model.MdsPolicy) int8 {
+func saveFromNetworkPolicyResponse(ctx *context.Context, diagnostics *diag.Diagnostics, state *networkPolicyResourceModel, policy *model.MdsPolicy) int8 {
 	tflog.Info(*ctx, "Saving response to resourceModel state/plan", map[string]interface{}{"policy": *policy})
-	if policy.ServiceType == service_type.RABBITMQ {
-		tfPermissionSpecModel, diags := convertFromPermissionSpecDto(ctx, policy.PermissionsSpec)
-		if diagnostics.Append(diags...); diagnostics.HasError() {
-			return 1
-		}
 
-		sort.Slice(tfPermissionSpecModel, func(i, j int) bool {
-			roleI := tfPermissionSpecModel[i].Role.ValueString()
-			roleJ := tfPermissionSpecModel[j].Role.ValueString()
-			return roleI < roleJ
-		})
-		state.PermissionSpecs = tfPermissionSpecModel
+	tfNetworkSpecModels := make([]*NetworkSpecModel, len(policy.NetworkSpec))
+	for i, networkSpec := range policy.NetworkSpec {
+		tfNetworkSpecModels[i] = &NetworkSpecModel{
+			Cidr: types.StringValue(networkSpec.CIDR),
+		}
+		networkPortIds, _ := types.SetValueFrom(*ctx, types.StringType, networkSpec.NetworkPortIds)
+		tfNetworkSpecModels[i].NetworkPortIds = networkPortIds
 	}
+	state.NetworkSpec = tfNetworkSpecModels[0]
 
 	state.ID = types.StringValue(policy.ID)
 	state.Name = types.StringValue(policy.Name)
@@ -346,15 +335,25 @@ func saveFromPolicyResponse(ctx *context.Context, diagnostics *diag.Diagnostics,
 	return 0
 }
 
-func convertFromPermissionSpecDto(ctx *context.Context, roles []*model.MdsPermissionsSpec) ([]*PermissionSpecModel, diag.Diagnostics) {
-	tfPermissionSpecModels := make([]*PermissionSpecModel, len(roles))
-	for i, permissionSpec := range roles {
-		tfPermissionSpecModels[i] = &PermissionSpecModel{
-			Role:     types.StringValue(permissionSpec.Role),
-			Resource: types.StringValue(permissionSpec.Resource),
-		}
-		permissions, _ := types.SetValueFrom(*ctx, types.StringType, permissionSpec.Permissions)
-		tfPermissionSpecModels[i].Permissions = permissions
+func (r *networkPolicyResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var plan networkPolicyResourceModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	return tfPermissionSpecModels, nil
+
+	if plan.NetworkSpec != nil {
+		const pattern = `^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))$`
+		regex := regexp.MustCompile(pattern)
+
+		// Check if the value matches the pattern
+		if !regex.MatchString(plan.NetworkSpec.Cidr.ValueString()) {
+			resp.Diagnostics.AddError("Validation Failed", "CIDR form is invalid.( Ex. 10.22.55.0/24 )")
+
+		}
+	} else {
+		return
+	}
+
 }
