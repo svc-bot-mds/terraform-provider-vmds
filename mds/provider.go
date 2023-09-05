@@ -68,7 +68,6 @@ func (p *mdsProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *
 			"client_id": schema.StringAttribute{
 				Description: "Client Id for MDS API. May also be provided via MDS_CLIENT_ID environment variable.",
 				Optional:    true,
-				Sensitive:   true,
 			},
 			"client_secret": schema.StringAttribute{
 				Description: "Client Secret for MDS API. May also be provided via MDS_CLIENT_SECRET environment variable.",
