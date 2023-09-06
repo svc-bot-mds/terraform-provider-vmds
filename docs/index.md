@@ -37,7 +37,7 @@ provider "vmds" {
 ### Optional
 
 - `api_token` (String, Sensitive) API Token for MDS API. May also be provided via MDS_API_TOKEN environment variable.
-- `client_id` (String, Sensitive) Client Id for MDS API. May also be provided via MDS_CLIENT_ID environment variable.
+- `client_id` (String) Client Id for MDS API. May also be provided via MDS_CLIENT_ID environment variable.
 - `client_secret` (String, Sensitive) Client Secret for MDS API. May also be provided via MDS_CLIENT_SECRET environment variable.
 - `host` (String) URI for MDS API. May also be provided via MDS_HOST environment variable.
-- `org_id` (String, Sensitive) Organization Id for MDS API. May also be provided via MDS_ORG_ID environment variable.
+- `org_id` (String) Organization Id for MDS API. May also be provided via MDS_ORG_ID environment variable.

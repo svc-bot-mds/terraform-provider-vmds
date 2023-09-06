@@ -19,8 +19,8 @@ output "cluster_metadata" {
   value = data.vmds_network_ports.all
 }
 
-resource "vmds_policy" "network" {
-  name         = "network-policy-from-tf"
+resource "vmds_network_policy" "network" {
+  name         = "network-policy-from-m"
   service_type = "NETWORK"
   network_spec = {
     cidr             = "10.22.55.0/24",
