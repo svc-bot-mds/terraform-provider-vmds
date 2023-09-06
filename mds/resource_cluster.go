@@ -304,14 +304,20 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 
 	// Map response body to schema and populate Computed attribute values
 	createdCluster := &(*clusters.Get())[0]
-	for createdCluster.Status != "READY" {
-		time.Sleep(10 * time.Second)
-		createdCluster, err = r.client.Controller.GetMdsCluster(createdCluster.ID)
-		if err != nil {
-			resp.Diagnostics.AddError("Fetching cluster",
-				"Could not fetch cluster by ID, unexpected error: "+err.Error(),
-			)
-			return
+	if createdCluster.Status == "FAILED" {
+		resp.Diagnostics.AddError("Error creating cluster",
+			"Cluster creation failed with the status 'FAILED'")
+		return
+	} else {
+		for createdCluster.Status != "READY" && createdCluster.Status != "FAILED" {
+			time.Sleep(10 * time.Second)
+			createdCluster, err = r.client.Controller.GetMdsCluster(createdCluster.ID)
+			if err != nil {
+				resp.Diagnostics.AddError("Fetching cluster",
+					"Could not fetch cluster by ID, unexpected error: "+err.Error(),
+				)
+				return
+			}
 		}
 	}
 	if saveFromResponse(&ctx, &resp.Diagnostics, &plan, createdCluster) != 0 {
@@ -475,7 +481,7 @@ func saveFromResponse(ctx *context.Context, diagnostics *diag.Diagnostics, state
 	metadataModel := clusterMetadataModel{
 		ManagerUri:       types.StringValue(""),
 		ConnectionUri:    types.StringValue(""),
-		MetricsEndpoints: types.ListUnknown(types.StringType),
+		MetricsEndpoints: types.ListNull(types.StringType),
 	}
 	if cluster.Metadata != nil {
 		list, diags := types.ListValueFrom(*ctx, types.StringType, cluster.Metadata.MetricsEndpoints)
