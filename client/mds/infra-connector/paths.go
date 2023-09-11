@@ -7,4 +7,5 @@ const (
 	Types          = "types"
 	CloudProviders = "cloud-providers"
 	TshirtSize     = "t-shirt-size"
+	Certificate    = "certificate"
 )

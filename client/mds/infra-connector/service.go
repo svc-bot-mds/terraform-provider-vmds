@@ -59,6 +59,25 @@ func (s *Service) GetCloudAccounts(query *MdsCloudAccountsQuery) (model.Paged[mo
 	return response, nil
 }
 
+func (s *Service) GetCertificates(query *MDSCertificateQuery) (model.Paged[model.MdsByocCertificate], error) {
+	var response model.Paged[model.MdsByocCertificate]
+	if query == nil {
+		return response, fmt.Errorf("query cannot be nil")
+	}
+
+	reqUrl := fmt.Sprintf("%s/%s", s.Endpoint, Certificate)
+
+	if query.Size == 0 {
+		query.Size = defaultPage.Size
+	}
+
+	_, err := s.Api.Get(&reqUrl, query, &response)
+	if err != nil {
+		return response, err
+	}
+	return response, nil
+}
+
 func (s *Service) GetTshirtSizes(query *MdsTshirtSizesQuery) (model.Paged[model.MdsByocTshirtSize], error) {
 	var response model.Paged[model.MdsByocTshirtSize]
 	if query == nil {

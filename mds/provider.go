@@ -296,6 +296,7 @@ func (p *mdsProvider) DataSources(_ context.Context) []func() datasource.DataSou
 		NewProviderTypesDataSource,
 		NewCloudProviderRegionsDataSource,
 		NewTshirtSizeDatasource,
+		NewCertificatesDatasource,
 	}
 }
 
