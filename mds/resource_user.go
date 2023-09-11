@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -106,7 +105,7 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 			"status": schema.StringAttribute{
 				Description: "Active status of user on MDS.",
 				Computed:    true,
-				Default:     stringdefault.StaticString("INVITED"),
+				//Default:     stringdefault.StaticString("INVITED"),
 			},
 			"username": schema.StringAttribute{
 				Description: "Short name of user.",
@@ -274,9 +273,9 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	plan.Tags.ElementsAs(ctx, &updateRequest.Tags, true)
 	plan.PolicyIds.ElementsAs(ctx, &updateRequest.PolicyIds, true)
 	if plan.Status.ValueString() != "INVITED" {
-		rolesReq := make([]customer_metadata.RolesRequest, len(plan.RoleIds))
+		rolesReq := make([]*customer_metadata.RolesRequest, len(plan.RoleIds))
 		for i, roleId := range plan.RoleIds {
-			rolesReq[i] = customer_metadata.RolesRequest{
+			rolesReq[i] = &customer_metadata.RolesRequest{
 				RoleId: roleId,
 			}
 		}
@@ -284,7 +283,7 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 			"roles": rolesReq,
 		})
 		if len(rolesReq) > 0 {
-			updateRequest.ServiceRoles = &rolesReq
+			updateRequest.ServiceRoles = rolesReq
 		}
 	}
 

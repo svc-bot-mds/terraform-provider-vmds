@@ -48,7 +48,6 @@ resource "vmds_service_account" "example" {
 
 ### Optional
 
-- `credential` (Attributes) Holds the Client Secret details. (see [below for nested schema](#nestedatt--credential))
 - `oauth_app` (Attributes) Provides OauthApp details. (see [below for nested schema](#nestedatt--oauth_app))
 - `policy_ids` (Set of String) IDs of service policies to be associated with service account.
 - `tags` (Set of String) Tags or labels to categorise service accounts for ease of finding.
@@ -56,19 +55,9 @@ resource "vmds_service_account" "example" {
 
 ### Read-Only
 
+- `credential` (Attributes) Holds the Client Secret details. (see [below for nested schema](#nestedatt--credential))
 - `id` (String) Auto-generated ID after creating an user, and can be passed to import an existing user from MDS to terraform state.
 - `status` (String) Active status of service account on MDS.
-
-<a id="nestedatt--credential"></a>
-### Nested Schema for `credential`
-
-Read-Only:
-
-- `client_id` (String) Client Id generated for the service account.
-- `client_secret` (String) Client Secret generated for the service account.
-- `grant_type` (String) Grant Type of the credentials.
-- `org_id` (String) Org Id of the current user.
-
 
 <a id="nestedatt--oauth_app"></a>
 ### Nested Schema for `oauth_app`
@@ -103,6 +92,17 @@ Optional:
 Optional:
 
 - `create` (String)
+
+
+<a id="nestedatt--credential"></a>
+### Nested Schema for `credential`
+
+Read-Only:
+
+- `client_id` (String) Client Id generated for the service account.
+- `client_secret` (String) Client Secret generated for the service account.
+- `grant_type` (String) Grant Type of the credentials.
+- `org_id` (String) Org Id of the current user.
 
 ## Import
 

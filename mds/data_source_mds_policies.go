@@ -82,6 +82,7 @@ func (d *mdsPoliciesDatasource) Schema(_ context.Context, _ datasource.SchemaReq
 // Read refreshes the Terraform state with the latest data.
 func (d *mdsPoliciesDatasource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var state mdsPoliciesDatasourceModel
+	var policies []mdsPoliciesModel
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 
@@ -99,13 +100,38 @@ func (d *mdsPoliciesDatasource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	for _, mdsPolicyDTO := range *nwPolicies.Get() {
-		policy := mdsPoliciesModel{
-			ID:   types.StringValue(mdsPolicyDTO.ID),
-			Name: types.StringValue(mdsPolicyDTO.Name),
+	if nwPolicies.Page.TotalPages > 1 {
+		for i := 1; i <= nwPolicies.Page.TotalPages; i++ {
+			query.PageQuery.Index = i - 1
+			totalPolicies, err := d.client.CustomerMetadata.GetPolicies(query)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Unable to Read MDS Policies",
+					err.Error(),
+				)
+				return
+			}
+
+			for _, mdsPolicyDTO := range *totalPolicies.Get() {
+				policy := mdsPoliciesModel{
+					ID:   types.StringValue(mdsPolicyDTO.ID),
+					Name: types.StringValue(mdsPolicyDTO.Name),
+				}
+				policies = append(policies, policy)
+			}
 		}
-		tflog.Debug(ctx, "nwPolicy dto", map[string]interface{}{"dto": policy})
-		state.Policies = append(state.Policies, policy)
+
+		tflog.Debug(ctx, "rabbitmq dto", map[string]interface{}{"dto": policies})
+		state.Policies = append(state.Policies, policies...)
+	} else {
+		for _, mdsPolicyDTO := range *nwPolicies.Get() {
+			policy := mdsPoliciesModel{
+				ID:   types.StringValue(mdsPolicyDTO.ID),
+				Name: types.StringValue(mdsPolicyDTO.Name),
+			}
+			tflog.Debug(ctx, "rabbitmq dto", map[string]interface{}{"dto": policy})
+			state.Policies = append(state.Policies, policy)
+		}
 	}
 
 	state.Id = types.StringValue(common.DataSource + common.PoliciesId)

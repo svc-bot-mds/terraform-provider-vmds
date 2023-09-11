@@ -81,6 +81,7 @@ func (d *clustersDatasource) Schema(_ context.Context, _ datasource.SchemaReques
 // Read refreshes the Terraform state with the latest data.
 func (d *clustersDatasource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var state clustersDatasourceModel
+	var clusterList []clustersModel
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 
@@ -97,13 +98,38 @@ func (d *clustersDatasource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	for _, mdsClusterDto := range *clusters.Get() {
-		cluster := clustersModel{
-			ID:   types.StringValue(mdsClusterDto.ID),
-			Name: types.StringValue(mdsClusterDto.Name),
+	if clusters.Page.TotalPages > 1 {
+		for i := 1; i <= clusters.Page.TotalPages; i++ {
+			query.PageQuery.Index = i - 1
+			totalClusters, err := d.client.Controller.GetMdsClusters(query)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Unable to Read MDS Clusters",
+					err.Error(),
+				)
+				return
+			}
+
+			for _, mdsClusterDto := range *totalClusters.Get() {
+				cluster := clustersModel{
+					ID:   types.StringValue(mdsClusterDto.ID),
+					Name: types.StringValue(mdsClusterDto.Name),
+				}
+				clusterList = append(clusterList, cluster)
+			}
 		}
-		tflog.Debug(ctx, "mdsClusterDto dto", map[string]interface{}{"dto": cluster})
-		state.Clusters = append(state.Clusters, cluster)
+
+		tflog.Debug(ctx, "rabbitmq dto", map[string]interface{}{"dto": clusterList})
+		state.Clusters = append(state.Clusters, clusterList...)
+	} else {
+		for _, mdsClusterDto := range *clusters.Get() {
+			cluster := clustersModel{
+				ID:   types.StringValue(mdsClusterDto.ID),
+				Name: types.StringValue(mdsClusterDto.Name),
+			}
+			tflog.Debug(ctx, "mdsClusterDto dto", map[string]interface{}{"dto": cluster})
+			state.Clusters = append(state.Clusters, cluster)
+		}
 	}
 
 	state.ID = types.StringValue(common.DataSource + common.ClusterId)
