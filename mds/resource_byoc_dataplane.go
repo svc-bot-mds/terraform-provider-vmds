@@ -160,7 +160,7 @@ func (r *byocDataPlaneResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	// Generate API request body from plan
-	dataplaneRequest := infra_connector.ByocDataPlaneCreateRequest{
+	dataplaneRequest := infra_connector.DataPlaneCreateRequest{
 		Name:          plan.Name.ValueString(),
 		CertificateId: plan.CertificateId.ValueString(),
 		AccountId:     plan.AccountId.ValueString(),
@@ -178,7 +178,7 @@ func (r *byocDataPlaneResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
-	dataplanes, err := r.client.InfraConnector.GetDataPlaneByName(&infra_connector.ByocDataPlaneQuery{
+	dataplanes, err := r.client.InfraConnector.GetDataPlanes(&infra_connector.DataPlaneQuery{
 		Name: dataplaneRequest.Name,
 	})
 	if err != nil {
@@ -225,7 +225,7 @@ func (r *byocDataPlaneResource) Delete(ctx context.Context, request resource.Del
 	}
 
 	// Submit request to delete Byoc DataPlane
-	err := r.client.InfraConnector.DeleteByocDataPlane(state.ID.ValueString())
+	err := r.client.InfraConnector.DeleteDataPlane(state.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Deleting Byoc DataPlane",
@@ -276,7 +276,7 @@ func (r *byocDataPlaneResource) Read(ctx context.Context, req resource.ReadReque
 	tflog.Info(ctx, "END__Read")
 }
 
-func saveFromDataPlaneResponse(ctx *context.Context, diagnostics *diag.Diagnostics, state *byocDataPlaneResourceModel, byocDataPlane *model.ByocDataPlane) int8 {
+func saveFromDataPlaneResponse(ctx *context.Context, diagnostics *diag.Diagnostics, state *byocDataPlaneResourceModel, byocDataPlane *model.DataPlane) int8 {
 	tflog.Info(*ctx, "Saving response to resourceModel state/plan", map[string]interface{}{"byocDataPlane": *byocDataPlane})
 
 	state.ID = types.StringValue(byocDataPlane.Id)

@@ -1,6 +1,6 @@
 package infra_connector
 
-type ByocDataPlaneCreateRequest struct {
+type DataPlaneCreateRequest struct {
 	AccountId     string `json:"accountId"`
 	CertificateId string `json:"certificateId"`
 	Name          string `json:"name"`

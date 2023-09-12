@@ -1,6 +1,6 @@
 package model
 
-type MdsByocCloudAccount struct {
+type MdsCloudAccount struct {
 	Id          string `json:"id"`
 	Email       string `json:"userEmail"`
 	Name        string `json:"name"`

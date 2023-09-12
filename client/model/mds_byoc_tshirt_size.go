@@ -1,6 +1,6 @@
 package model
 
-type MdsByocTshirtSize struct {
+type MdsTshirtSize struct {
 	Name     string `json:"name"`
 	Nodes    int64  `json:"nodes"`
 	Provider string `json:"provider"`

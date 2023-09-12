@@ -27,7 +27,7 @@ Represents a Dataplane on BYOC. Supported actions are Add and Delete
 
 - `certificate` (Attributes) Certificate Details (see [below for nested schema](#nestedatt--certificate))
 - `data_plane_release_name` (String) Helm Release Name
-- `id` (String) Auto-generated ID of the policy after creation, and can be used to import it from MDS to terraform state.
+- `id` (String) Auto-generated ID of the dataplane after creation, and can be used to import it from MDS to terraform state.
 - `provider_name` (String) Provider name
 - `status` (String) Status of the dataplane
 - `version` (String) K8S version

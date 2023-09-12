@@ -93,10 +93,10 @@ func (d *cloudProviderRegionsDataSource) Read(ctx context.Context, req datasourc
 	//Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 
-	regions, err := d.client.InfraConnector.GetCloudProviderRegions()
+	regions, err := d.client.InfraConnector.GetDataPlaneRegions()
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Unable to Read MDS Regions:",
+			"Unable to Read Regions:",
 			err.Error(),
 		)
 		return

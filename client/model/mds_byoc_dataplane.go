@@ -1,6 +1,6 @@
 package model
 
-type ByocDataPlane struct {
+type DataPlane struct {
 	Id                   string      `json:"id"`
 	Provider             string      `json:"provider"`
 	Name                 string      `json:"name"`

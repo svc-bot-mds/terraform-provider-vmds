@@ -1,6 +1,6 @@
 package model
 
-type MdsByocCertificate struct {
+type MdsCertificate struct {
 	Id         string `json:"id"`
 	DomainName string `json:"domainName"`
 	Name       string `json:"name"`
