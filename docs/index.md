@@ -23,6 +23,7 @@ provider "vmds" {
   client_secret = "MDS_CLIENT_SECRET"
   org_id        = "MDS_ORG_ID"
 
+  type = "api_token / client_credentials"
 }
 ```
 

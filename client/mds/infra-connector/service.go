@@ -120,3 +120,71 @@ func (s *Service) GetCloudProviderRegions() ([]model.MdsByocCloudProviderRegion,
 	}
 	return response, nil
 }
+
+// CreateDataPlane - Submits a request to create dataplane
+func (s *Service) CreateDataPlane(requestBody *ByocDataPlaneCreateRequest) (*model.MdsPolicy, error) {
+	if requestBody == nil {
+		return nil, fmt.Errorf("requestBody cannot be nil")
+	}
+	var response model.MdsPolicy
+	urlPath := fmt.Sprintf("%s/%s", s.Endpoint, K8sCluster)
+
+	_, err := s.Api.Post(&urlPath, requestBody, &response)
+	if err != nil {
+		return &response, err
+	}
+
+	return &response, err
+}
+
+func (s *Service) GetDataPlane(id string) ([]model.MdsByocCloudProviderRegion, error) {
+	var response []model.MdsByocCloudProviderRegion
+
+	reqUrl := fmt.Sprintf("%s/%s/%s", s.Endpoint, K8sCluster, id)
+
+	_, err := s.Api.Get(&reqUrl, nil, &response)
+	if err != nil {
+		return response, err
+	}
+	return response, nil
+}
+
+func (s *Service) GetDataPlaneByName(query *ByocDataPlaneQuery) (model.Paged[model.ByocDataPlane], error) {
+	urlPath := fmt.Sprintf("%s/%s", s.Endpoint, K8sCluster)
+	var response model.Paged[model.ByocDataPlane]
+
+	if query.Size == 0 {
+		query.Size = defaultPage.Size
+	}
+
+	_, err := s.Api.Get(&urlPath, query, &response)
+	if err != nil {
+		return response, err
+	}
+
+	return response, nil
+}
+
+func (s *Service) GetDataPlaneById(id string) (model.ByocDataPlane, error) {
+	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, K8sCluster, id)
+	var response model.ByocDataPlane
+
+	_, err := s.Api.Get(&urlPath, nil, &response)
+	if err != nil {
+		return response, err
+	}
+
+	return response, nil
+}
+
+// DeleteByocDataPlane - Submits a request to delete dataplane
+func (s *Service) DeleteByocDataPlane(id string) error {
+	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, K8sCluster, id)
+
+	_, err := s.Api.Delete(&urlPath, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
