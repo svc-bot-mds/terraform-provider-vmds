@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds/core"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/model"
+	"strings"
 )
 
 const (
@@ -57,6 +58,22 @@ func (s *Service) GetCloudAccounts(query *MdsCloudAccountsQuery) (model.Paged[mo
 		return response, err
 	}
 	return response, nil
+}
+
+// GetCloudAccount - Submits a request to fetch cloud account
+func (s *Service) GetCloudAccount(id string) (*model.MdsCloudAccount, error) {
+	if strings.TrimSpace(id) == "" {
+		return nil, fmt.Errorf("ID cannot be empty")
+	}
+	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, CloudAccount, id)
+	var response model.MdsCloudAccount
+
+	_, err := s.Api.Get(&urlPath, nil, &response)
+	if err != nil {
+		return &response, err
+	}
+
+	return &response, err
 }
 
 func (s *Service) GetCertificates(query *MDSCertificateQuery) (model.Paged[model.MdsCertificate], error) {
@@ -168,6 +185,46 @@ func (s *Service) GetDataPlaneById(id string) (model.DataPlane, error) {
 // DeleteDataPlane - Submits a request to delete dataplane
 func (s *Service) DeleteDataPlane(id string) error {
 	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, K8sCluster, id)
+
+	_, err := s.Api.Delete(&urlPath, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) CreateCloudAccount(requestBody *CloudAccountCreateRequest) (*model.MdsCloudAccount, error) {
+	if requestBody == nil {
+		return nil, fmt.Errorf("requestBody cannot be nil")
+	}
+	var response model.MdsCloudAccount
+	urlPath := fmt.Sprintf("%s/%s", s.Endpoint, CloudAccount)
+
+	_, err := s.Api.Post(&urlPath, requestBody, &response)
+	if err != nil {
+		return &response, err
+	}
+
+	return &response, err
+}
+
+// UpdateCloudAccount - To Update the cloud account
+func (s *Service) UpdateCloudAccount(id string, requestBody *CredentialModel) error {
+
+	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, CloudAccount, id)
+	_, err := s.Api.Put(&urlPath, requestBody, nil)
+
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+// DeleteCloudAccount - Submits a request to delete cloud account
+func (s *Service) DeleteCloudAccount(id string) error {
+	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, CloudAccount, id)
 
 	_, err := s.Api.Delete(&urlPath, nil, nil)
 	if err != nil {

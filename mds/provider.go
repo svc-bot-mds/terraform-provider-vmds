@@ -310,6 +310,7 @@ func (p *mdsProvider) Resources(_ context.Context) []func() resource.Resource {
 		NewPolicyResource,
 		NewNetworkPolicyResource,
 		NewByocDataPlaneResourceResource,
+		NewCloudAccountResource,
 	}
 }
 
