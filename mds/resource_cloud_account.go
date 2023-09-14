@@ -148,7 +148,7 @@ func (r *cloudAccountResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	tflog.Info(ctx, "req param", map[string]interface{}{"reeed": cloudAccountRequest})
-	svcAcctCredentials, err := r.client.InfraConnector.CreateCloudAccount(cloudAccountRequest)
+	cloudAccount, err := r.client.InfraConnector.CreateCloudAccount(cloudAccountRequest)
 	if err != nil {
 		apiErr := core.ApiError{}
 		errors.As(err, &apiErr)
@@ -161,7 +161,7 @@ func (r *cloudAccountResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	// Map response body to schema and populate Computed attribute values
-	if saveFromCloudAccountCreateResponse(&plan, svcAcctCredentials) != 0 {
+	if saveFromCloudAccountCreateResponse(&plan, cloudAccount) != 0 {
 		return
 	}
 
@@ -193,7 +193,7 @@ func (r *cloudAccountResource) Update(ctx context.Context, req resource.UpdateRe
 		fmt.Println("Successfully unmarshalled Credential JSON:", cred)
 	}
 
-	// Update existing svc account
+	// Update existing cloud account
 	if err := r.client.InfraConnector.UpdateCloudAccount(state.ID.ValueString(), &cred); err != nil {
 		resp.Diagnostics.AddError(
 			"Updating MDS cloud account",
@@ -202,7 +202,7 @@ func (r *cloudAccountResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	svcAccount, err := r.client.InfraConnector.GetCloudAccount(state.ID.ValueString())
+	cloudAccount, err := r.client.InfraConnector.GetCloudAccount(state.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Fetching cloud account",
 			"Could not fetch cloud account while updating, unexpected error: "+err.Error(),
@@ -210,7 +210,7 @@ func (r *cloudAccountResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	if saveFromCloudAccountCreateResponse(&state, svcAccount) != 0 {
+	if saveFromCloudAccountCreateResponse(&state, cloudAccount) != 0 {
 		return
 	}
 
@@ -269,7 +269,7 @@ func (r *cloudAccountResource) Read(ctx context.Context, req resource.ReadReques
 	}
 
 	// Get refreshed cloud account value from MDS
-	svcAcct, err := r.client.InfraConnector.GetCloudAccount(state.ID.ValueString())
+	cloudAcct, err := r.client.InfraConnector.GetCloudAccount(state.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Reading MDS cloud account",
@@ -278,7 +278,7 @@ func (r *cloudAccountResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	if saveFromCloudAccountCreateResponse(&state, svcAcct) != 0 {
+	if saveFromCloudAccountCreateResponse(&state, cloudAcct) != 0 {
 		return
 	}
 

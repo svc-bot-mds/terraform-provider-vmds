@@ -233,3 +233,57 @@ func (s *Service) DeleteCloudAccount(id string) error {
 
 	return nil
 }
+
+func (s *Service) CreateCertificate(requestBody *CertificateCreateRequest) (*model.MdsCertificate, error) {
+	if requestBody == nil {
+		return nil, fmt.Errorf("requestBody cannot be nil")
+	}
+	var response model.MdsCertificate
+	urlPath := fmt.Sprintf("%s/%s", s.Endpoint, Certificate)
+
+	_, err := s.Api.Post(&urlPath, requestBody, &response)
+	if err != nil {
+		return &response, err
+	}
+
+	return &response, err
+}
+
+func (s *Service) UpdateCertificate(id string, requestBody *CertificateUpdateRequest) (*model.MdsCertificate, error) {
+	if requestBody == nil {
+		return nil, fmt.Errorf("requestBody cannot be nil")
+	}
+	var response model.MdsCertificate
+	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, Certificate, id)
+
+	_, err := s.Api.Post(&urlPath, requestBody, &response)
+	if err != nil {
+		return &response, err
+	}
+
+	return &response, err
+}
+
+func (s *Service) GetCertificate(id string) (model.MdsCertificate, error) {
+	var response model.MdsCertificate
+
+	reqUrl := fmt.Sprintf("%s/%s/%s", s.Endpoint, Certificate, id)
+
+	_, err := s.Api.Get(&reqUrl, nil, &response)
+	if err != nil {
+		return response, err
+	}
+	return response, nil
+}
+
+// DeleteCertificate - Submits a request to delete certificate
+func (s *Service) DeleteCertificate(id string) error {
+	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, Certificate, id)
+
+	_, err := s.Api.Delete(&urlPath, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
