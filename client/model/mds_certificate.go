@@ -6,4 +6,5 @@ type MdsCertificate struct {
 	Name       string `json:"name"`
 	Provider   string `json:"provider"`
 	ExpiryTime string `json:"expirationTime"`
+	CreatedBy  string `json:"createdBy,omitempty"`
 }
