@@ -135,9 +135,12 @@ func (r *cloudAccountResource) Create(ctx context.Context, req resource.CreateRe
 
 	var cred infra_connector.CredentialModel
 	if err := json.Unmarshal([]byte(plan.Credential.ValueString()), &cred); err != nil {
-		fmt.Println("Error unmarshalling Credential JSON:", err)
+		resp.Diagnostics.AddError(
+			"Error unmarshalling Credential JSON",
+			" Unexpected error: "+err.Error(),
+		)
 	} else {
-		fmt.Println("Successfully unmarshalled Credential JSON:", cred)
+		tflog.Info(ctx, "Successfully unmarshalled Credential JSON:", map[string]interface{}{"cred": cred})
 	}
 
 	// Generate API request body from plan
@@ -187,10 +190,14 @@ func (r *cloudAccountResource) Update(ctx context.Context, req resource.UpdateRe
 	}
 
 	var cred infra_connector.CredentialModel
+
 	if err := json.Unmarshal([]byte(state.Credential.ValueString()), &cred); err != nil {
-		fmt.Println("Error unmarshalling Credential JSON:", err)
+		resp.Diagnostics.AddError(
+			"Error unmarshalling Credential JSON",
+			" Unexpected error: "+err.Error(),
+		)
 	} else {
-		fmt.Println("Successfully unmarshalled Credential JSON:", cred)
+		tflog.Info(ctx, "Successfully unmarshalled Credential JSON:", map[string]interface{}{"cred": cred})
 	}
 
 	// Update existing cloud account

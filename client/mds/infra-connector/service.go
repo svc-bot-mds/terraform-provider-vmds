@@ -194,7 +194,6 @@ func (s *Service) DeleteDataPlane(id string) error {
 	return nil
 }
 
-
 func (s *Service) CreateCloudAccount(requestBody *CloudAccountCreateRequest) (*model.MdsCloudAccount, error) {
 	if requestBody == nil {
 		return nil, fmt.Errorf("requestBody cannot be nil")
@@ -255,7 +254,7 @@ func (s *Service) UpdateCertificate(id string, requestBody *CertificateUpdateReq
 		return nil, fmt.Errorf("requestBody cannot be nil")
 	}
 	var response model.MdsCertificate
-	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, Certificate, id)
+	urlPath := fmt.Sprintf("%s	/%s/%s", s.Endpoint, Certificate, id)
 
 	_, err := s.Api.Post(&urlPath, requestBody, &response)
 	if err != nil {
@@ -274,7 +273,7 @@ func (s *Service) GetCertificate(id string) (model.MdsCertificate, error) {
 	if err != nil {
 		return response, err
 	}
-	return response, nil
+	return response, err
 }
 
 // DeleteCertificate - Submits a request to delete certificate
@@ -286,6 +285,5 @@ func (s *Service) DeleteCertificate(id string) error {
 		return err
 	}
 
-	return nil
+	return err
 }
-

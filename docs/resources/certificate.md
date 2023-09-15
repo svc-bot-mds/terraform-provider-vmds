@@ -22,9 +22,9 @@ Represents a certificate created on MDS, can be used to create/update/delete/imp
 - `certificate` (String) Certificate details
 - `certificate_ca` (String) Certificate CA details
 - `certificate_key` (String) Certificate Key details
-- `domain_name` (String) Domain Name of the certificate on MDS.Updating the provider type results in deletion of existing certificate and new certificate with updated provider type is created
+- `domain_name` (String) Domain Name of the certificate on MDS. Updating the provider type results in deletion of existing certificate and new certificate with updated provider type is created
 - `name` (String) Updating the name results in deletion of existing certificate and new certificate with updated name is created.
-- `provider_type` (String) Provider Type of certificate on MDS.Updating the provider type results in deletion of existing certificate and new certificate with updated provider type is created
+- `provider_type` (String) Provider Type of certificate on MDS. Updating the provider type results in deletion of existing certificate and new certificate with updated provider type is created
 
 ### Optional
 

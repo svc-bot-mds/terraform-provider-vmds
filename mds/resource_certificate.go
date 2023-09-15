@@ -97,14 +97,14 @@ func (r *certificateResource) Schema(ctx context.Context, _ resource.SchemaReque
 				},
 			},
 			"provider_type": schema.StringAttribute{
-				Description: "Provider Type of certificate on MDS.Updating the provider type results in deletion of existing certificate and new certificate with updated provider type is created",
+				Description: "Provider Type of certificate on MDS. Updating the provider type results in deletion of existing certificate and new certificate with updated provider type is created",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 				Required: true,
 			},
 			"domain_name": schema.StringAttribute{
-				Description: "Domain Name of the certificate on MDS.Updating the provider type results in deletion of existing certificate and new certificate with updated provider type is created",
+				Description: "Domain Name of the certificate on MDS. Updating the provider type results in deletion of existing certificate and new certificate with updated provider type is created",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
