@@ -41,7 +41,9 @@ func (s *Service) GetRegionsWithDataPlanes(regionsQuery *DataPlaneRegionsQuery) 
 	return response, nil
 }
 
-func (s *Service) GetCloudAccounts(query *MdsCloudAccountsQuery) (model.Paged[model.MdsCloudAccount], error) {
+func (s *Service) 
+
+s(query *MdsCloudAccountsQuery) (model.Paged[model.MdsCloudAccount], error) {
 	var response model.Paged[model.MdsCloudAccount]
 	if query == nil {
 		return response, fmt.Errorf("query cannot be nil")
