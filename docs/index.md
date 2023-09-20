@@ -33,7 +33,9 @@ provider "vmds" {
 ### Required
 
 
+
 - `type` (String) OAuthType for the MDS API. It Can be 'api_token' or 'client_credentials'
+
 
 
 

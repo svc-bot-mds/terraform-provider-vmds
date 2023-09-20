@@ -44,6 +44,6 @@ EOF
 
 resource "vmds_cloud_account" "example" {
   name          = "tf-cloud-account1"
-  provider_type = "vrli"
-  credential    = var.vrli_cred
+  provider_type = "aws"
+  credential    = var.aws_cred
 }
