@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -20,11 +19,6 @@ import (
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds/core"
 	customer_metadata "github.com/svc-bot-mds/terraform-provider-vmds/client/mds/customer-metadata"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/model"
-	"time"
-)
-
-const (
-	defaultServiceAccCreateTimeout = 2 * time.Minute
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -48,7 +42,6 @@ type serviceAccountResourceModel struct {
 	Status     types.String          `tfsdk:"status"`
 	PolicyIds  types.Set             `tfsdk:"policy_ids"`
 	Tags       types.Set             `tfsdk:"tags"`
-	Timeouts   timeouts.Value        `tfsdk:"timeouts"`
 	Credential types.Object          `tfsdk:"credential"`
 	OauthApp   basetypes.ObjectValue `tfsdk:"oauth_app"`
 }
@@ -104,8 +97,7 @@ func (r *serviceAccountResource) Schema(ctx context.Context, _ resource.SchemaRe
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Represents a service account created on MDS, can be used to create/update/delete/import a service account.\n" +
 			"Note: 1. Only service accounts with valid oAuthapp can be imported.\n" +
-			"2. Please make sure you have selected the valid policy with active clusters while creating the service account.\n" +
-			fmt.Sprintf("3. Default timeout for creation is `%v`.", defaultServiceAccCreateTimeout),
+			"2. Please make sure you have selected the valid policy with active clusters while creating the service account.\n",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "Auto-generated ID after creating an user, and can be passed to import an existing user from MDS to terraform state.",
@@ -137,9 +129,6 @@ func (r *serviceAccountResource) Schema(ctx context.Context, _ resource.SchemaRe
 				Computed:    true,
 				ElementType: types.StringType,
 			},
-			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
-				Create: true,
-			}),
 			"oauth_app": schema.SingleNestedAttribute{
 				MarkdownDescription: "Provides OauthApp details.",
 				Computed:            true,
@@ -262,15 +251,6 @@ func (r *serviceAccountResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	// Create() is passed a default timeout to use if no value
-	// has been supplied in the Terraform configuration.
-	createTimeout, diags := plan.Timeouts.Create(ctx, defaultServiceAccCreateTimeout)
-	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, createTimeout)
-	defer cancel()
 	// Generate API request body from plan
 	svcAccountRequest := customer_metadata.MdsCreateSvcAccountRequest{
 		Usernames: []string{plan.Name.ValueString()},
@@ -466,14 +446,6 @@ func (r *serviceAccountResource) Delete(ctx context.Context, request resource.De
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	deleteTimeout, diags := state.Timeouts.Delete(ctx, defaultDeleteTimeout)
-	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
-	defer cancel()
 
 	// Submit request to delete MDS Cluster
 	err := r.client.CustomerMetadata.DeleteMdsServiceAccount(state.ID.ValueString())

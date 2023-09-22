@@ -3,7 +3,6 @@ package mds
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -17,11 +16,6 @@ import (
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
 	customer_metadata "github.com/svc-bot-mds/terraform-provider-vmds/client/mds/customer-metadata"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/model"
-	"time"
-)
-
-const (
-	defaultUserCreateTimeout = 2 * time.Minute
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -40,16 +34,15 @@ type userResource struct {
 }
 
 type userResourceModel struct {
-	ID           types.String   `tfsdk:"id"`
-	Email        types.String   `tfsdk:"email"`
-	Status       types.String   `tfsdk:"status"`
-	Username     types.String   `tfsdk:"username"`
-	PolicyIds    types.Set      `tfsdk:"policy_ids"`
-	RoleIds      []string       `tfsdk:"role_ids"`
-	ServiceRoles types.List     `tfsdk:"service_roles"`
-	OrgRoles     types.List     `tfsdk:"org_roles"`
-	Tags         types.Set      `tfsdk:"tags"`
-	Timeouts     timeouts.Value `tfsdk:"timeouts"`
+	ID           types.String `tfsdk:"id"`
+	Email        types.String `tfsdk:"email"`
+	Status       types.String `tfsdk:"status"`
+	Username     types.String `tfsdk:"username"`
+	PolicyIds    types.Set    `tfsdk:"policy_ids"`
+	RoleIds      []string     `tfsdk:"role_ids"`
+	ServiceRoles types.List   `tfsdk:"service_roles"`
+	OrgRoles     types.List   `tfsdk:"org_roles"`
+	Tags         types.Set    `tfsdk:"tags"`
 }
 
 type RolesModel struct {
@@ -85,8 +78,7 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Represents an User registered on MDS, can be used to create/update/delete/import an user.\n" +
-			"## Notes\n" +
-			fmt.Sprintf("- Default timeout for creation is `%v`.", defaultUserCreateTimeout),
+			"## Notes",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "Auto-generated ID after creating an user, and can be passed to import an existing user from MDS to terraform state.",
@@ -131,9 +123,6 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 				Computed:    true,
 				ElementType: types.StringType,
 			},
-			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
-				Create: true,
-			}),
 			"service_roles": schema.ListNestedAttribute{
 				Description: "Roles that determines access level inside services on MDS.",
 				Computed:    true,
@@ -185,15 +174,6 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	// Create() is passed a default timeout to use if no value
-	// has been supplied in the Terraform configuration.
-	createTimeout, diags := plan.Timeouts.Create(ctx, defaultUserCreateTimeout)
-	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, createTimeout)
-	defer cancel()
 	rolesReq := make([]customer_metadata.RolesRequest, len(plan.RoleIds))
 	for i, roleId := range plan.RoleIds {
 		rolesReq[i] = customer_metadata.RolesRequest{
@@ -327,14 +307,6 @@ func (r *userResource) Delete(ctx context.Context, request resource.DeleteReques
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	deleteTimeout, diags := state.Timeouts.Delete(ctx, defaultDeleteTimeout)
-	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
-	defer cancel()
 
 	// Submit request to delete MDS Cluster
 	err := r.client.CustomerMetadata.DeleteMdsUser(state.ID.ValueString())
