@@ -4,13 +4,11 @@ page_title: "vmds_cloud_account Resource - vmds"
 subcategory: ""
 description: |-
   Represents a cloud account created on MDS, can be used to create/update/delete/import a cloud account.
-  3. Default timeout for creation is 2m0s.
 ---
 
 # vmds_cloud_account (Resource)
 
 Represents a cloud account created on MDS, can be used to create/update/delete/import a cloud account.
-3. Default timeout for creation is `2m0s`.
 
 
 

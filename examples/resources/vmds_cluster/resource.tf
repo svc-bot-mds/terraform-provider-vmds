@@ -1,15 +1,16 @@
 resource "vmds_cluster" "example" {
-  name               = "example-rmq-cls"
+  name               = "test-terraform"
+  cloud_provider = "aws"
   service_type       = "RABBITMQ"
-  cloud_provider     = "aws"
   instance_size      = "XX-SMALL"
-  region             = "us-east-1"
-  network_policy_ids = ["ajgynfg634bfj63hd"]
+  region             = "eu-west-1"
+  network_policy_ids = ["policy id"]
   tags               = ["mds-tf", "example"]
-  timeouts           = {
-    create = "3m"
-    delete = "1m"
-  }
+  dedicated = false
+  shared = false
+
+  // if cluster getting self hosted via byoc
+  data_plane_id = "dataplane id"
   // non editable fields
   lifecycle {
     ignore_changes = [instance_size, name, cloud_provider, region, service_type]
