@@ -21,17 +21,18 @@ Changing only `tags` is supported at the moment. If you wish to update network p
 
 ```terraform
 resource "vmds_cluster" "example" {
-  name               = "example-rmq-cls"
+  name               = "test-terraform"
+  cloud_provider = "aws"
   service_type       = "RABBITMQ"
-  cloud_provider     = "aws"
   instance_size      = "XX-SMALL"
-  region             = "us-east-1"
-  network_policy_ids = ["ajgynfg634bfj63hd"]
+  region             = "eu-west-1"
+  network_policy_ids = ["policy id"]
   tags               = ["mds-tf", "example"]
-  timeouts           = {
-    create = "3m"
-    delete = "1m"
-  }
+  dedicated = false
+  shared = false
+
+  // if cluster getting self hosted via byoc
+  data_plane_id = "dataplane id"
   // non editable fields
   lifecycle {
     ignore_changes = [instance_size, name, cloud_provider, region, service_type]
@@ -52,31 +53,22 @@ Please make use of datasource `vmds_network_ports` to decide on a size based on 
 
 ### Optional
 
+- `data_plane_id` (String) ID of the data-plane where the cluster is running.Its a required field when we create a cluster which is Self-hosted via BYO Cloud
 - `dedicated` (Boolean) If present and set to `true`, the cluster will get deployed on a dedicated data-plane in current Org.
 - `network_policy_ids` (Set of String) IDs of network policies to attach to the cluster.
 - `service_type` (String) Type of MDS Cluster to be created. Supported values: `RABBITMQ` .
  Default is `RABBITMQ`.
+- `shared` (Boolean) If present and set to `true`, the cluster will get deployed on a shared data-plane in current Org.
 - `tags` (Set of String) Set of tags or labels to categorise the cluster.
-- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
 - `created` (String) Creation time of the cluster.
-- `data_plane_id` (String) ID of the data-plane where the cluster is running.
 - `id` (String) ID of the cluster.
 - `last_updated` (String) Time when the cluster was last modified.
 - `metadata` (Attributes) Additional info of the cluster. (see [below for nested schema](#nestedatt--metadata))
 - `org_id` (String) ID of the Org which owns the cluster.
 - `status` (String) Status of the cluster.
-
-<a id="nestedatt--timeouts"></a>
-### Nested Schema for `timeouts`
-
-Optional:
-
-- `create` (String)
-- `delete` (String)
-
 
 <a id="nestedatt--metadata"></a>
 ### Nested Schema for `metadata`
