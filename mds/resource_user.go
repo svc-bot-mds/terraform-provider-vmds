@@ -77,8 +77,7 @@ func (r *userResource) Schema(ctx context.Context, _ resource.SchemaRequest, res
 	tflog.Info(ctx, "INIT__Schema")
 
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Represents an User registered on MDS, can be used to create/update/delete/import an user.\n" +
-			"## Notes",
+		MarkdownDescription: "Represents an User registered on MDS, can be used to create/update/delete/import an user.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "Auto-generated ID after creating an user, and can be passed to import an existing user from MDS to terraform state.",
