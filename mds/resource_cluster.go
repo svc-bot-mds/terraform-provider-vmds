@@ -189,7 +189,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Computed:    true,
 			},
 			"data_plane_id": schema.StringAttribute{
-				Description: "ID of the data-plane where the cluster is running.Its a required field when we create a cluster which is Self-hosted via BYO Cloud",
+				Description: "ID of the data-plane where the cluster is running. It's a required field when we create a cluster which is self-hosted via BYO Cloud",
 				Computed:    true,
 				Optional:    true,
 				PlanModifiers: []planmodifier.String{
