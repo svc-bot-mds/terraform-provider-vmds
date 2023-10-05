@@ -6,7 +6,6 @@ description: |-
   Represents a service account created on MDS, can be used to create/update/delete/import a service account.
   Note: 1. Only service accounts with valid oAuthapp can be imported.
   2. Please make sure you have selected the valid policy with active clusters while creating the service account.
-  3. Default timeout for creation is 2m0s.
 ---
 
 # vmds_service_account (Resource)
@@ -14,7 +13,6 @@ description: |-
 Represents a service account created on MDS, can be used to create/update/delete/import a service account.
 Note: 1. Only service accounts with valid oAuthapp can be imported.
 2. Please make sure you have selected the valid policy with active clusters while creating the service account.
-3. Default timeout for creation is `2m0s`.
 
 ## Example Usage
 
@@ -51,7 +49,6 @@ resource "vmds_service_account" "example" {
 - `oauth_app` (Attributes) Provides OauthApp details. (see [below for nested schema](#nestedatt--oauth_app))
 - `policy_ids` (Set of String) IDs of service policies to be associated with service account.
 - `tags` (Set of String) Tags or labels to categorise service accounts for ease of finding.
-- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
@@ -84,14 +81,6 @@ Optional:
 - `time_unit` (String) Unit of time. Valid values : `HOURS` or `MINUTES`.
 - `ttl` (Number) time to live value.
 
-
-
-<a id="nestedatt--timeouts"></a>
-### Nested Schema for `timeouts`
-
-Optional:
-
-- `create` (String)
 
 
 <a id="nestedatt--credential"></a>

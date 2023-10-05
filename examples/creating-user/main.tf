@@ -36,9 +36,6 @@ resource "vmds_user" "temp" {
   tags       = ["new-user-tf", "update-tf-user"]
   role_ids   = [for role in data.vmds_roles.all.roles : role.role_id if contains(local.service_roles, role.name)]
   policy_ids = [for policy in data.vmds_policies.all.policies : policy.id if contains(local.policies, policy.name)]
-  timeouts   = {
-    create = "1m"
-  }
 
   // non editable fields
   lifecycle {

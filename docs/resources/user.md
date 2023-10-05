@@ -4,15 +4,11 @@ page_title: "vmds_user Resource - vmds"
 subcategory: ""
 description: |-
   Represents an User registered on MDS, can be used to create/update/delete/import an user.
-  Notes
-  Default timeout for creation is 2m0s.
 ---
 
 # vmds_user (Resource)
 
 Represents an User registered on MDS, can be used to create/update/delete/import an user.
-## Notes
-- Default timeout for creation is `2m0s`.
 
 ## Example Usage
 
@@ -20,11 +16,8 @@ Represents an User registered on MDS, can be used to create/update/delete/import
 resource "vmds_user" "example" {
   email      = "developer11@vmware.com"
   tags       = ["new-user", "viewer"]
-  role_ids   = ["mds:viewer"]
-  policy_ids = ["asdhh4bsd83bfd"]
-  timeouts   = {
-    create = "1m"
-  }
+  role_ids   = ["mds:Viewer"]
+  policy_ids = ["testtest"]
 
   // non editable fields
   lifecycle {
@@ -45,7 +38,6 @@ resource "vmds_user" "example" {
 
 - `policy_ids` (Set of String) IDs of service policies to be associated with user.
 - `tags` (Set of String) Tags or labels to categorise users for ease of finding.
-- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
 
 ### Read-Only
 
@@ -54,14 +46,6 @@ resource "vmds_user" "example" {
 - `service_roles` (Attributes List) Roles that determines access level inside services on MDS. (see [below for nested schema](#nestedatt--service_roles))
 - `status` (String) Active status of user on MDS.
 - `username` (String) Short name of user.
-
-<a id="nestedatt--timeouts"></a>
-### Nested Schema for `timeouts`
-
-Optional:
-
-- `create` (String)
-
 
 <a id="nestedatt--org_roles"></a>
 ### Nested Schema for `org_roles`

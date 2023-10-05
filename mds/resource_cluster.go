@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -48,22 +47,22 @@ type clusterResource struct {
 
 // clusterResourceModel maps the resource schema data.
 type clusterResourceModel struct {
-	ID               types.String   `tfsdk:"id"`
-	OrgId            types.String   `tfsdk:"org_id"`
-	Name             types.String   `tfsdk:"name"`
-	ServiceType      types.String   `tfsdk:"service_type"`
-	Provider         types.String   `tfsdk:"cloud_provider"`
-	InstanceSize     types.String   `tfsdk:"instance_size"`
-	Region           types.String   `tfsdk:"region"`
-	Tags             types.Set      `tfsdk:"tags"`
-	NetworkPolicyIds types.Set      `tfsdk:"network_policy_ids"`
-	Dedicated        types.Bool     `tfsdk:"dedicated"`
-	Status           types.String   `tfsdk:"status"`
-	DataPlaneId      types.String   `tfsdk:"data_plane_id"`
-	LastUpdated      types.String   `tfsdk:"last_updated"`
-	Created          types.String   `tfsdk:"created"`
-	Metadata         types.Object   `tfsdk:"metadata"`
-	Timeouts         timeouts.Value `tfsdk:"timeouts"`
+	ID               types.String `tfsdk:"id"`
+	OrgId            types.String `tfsdk:"org_id"`
+	Name             types.String `tfsdk:"name"`
+	ServiceType      types.String `tfsdk:"service_type"`
+	Provider         types.String `tfsdk:"cloud_provider"`
+	InstanceSize     types.String `tfsdk:"instance_size"`
+	Region           types.String `tfsdk:"region"`
+	Tags             types.Set    `tfsdk:"tags"`
+	NetworkPolicyIds types.Set    `tfsdk:"network_policy_ids"`
+	Dedicated        types.Bool   `tfsdk:"dedicated"`
+	Shared           types.Bool   `tfsdk:"shared"`
+	Status           types.String `tfsdk:"status"`
+	DataPlaneId      types.String `tfsdk:"data_plane_id"`
+	LastUpdated      types.String `tfsdk:"last_updated"`
+	Created          types.String `tfsdk:"created"`
+	Metadata         types.Object `tfsdk:"metadata"`
 	// TODO add upgrade related fields
 }
 
@@ -166,6 +165,11 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Optional:    true,
 				Computed:    false,
 			},
+			"shared": schema.BoolAttribute{
+				Description: "If present and set to `true`, the cluster will get deployed on a shared data-plane in current Org.",
+				Optional:    true,
+				Computed:    false,
+			},
 			"tags": schema.SetAttribute{
 				Description: "Set of tags or labels to categorise the cluster.",
 				Optional:    true,
@@ -185,8 +189,9 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Computed:    true,
 			},
 			"data_plane_id": schema.StringAttribute{
-				Description: "ID of the data-plane where the cluster is running.",
+				Description: "ID of the data-plane where the cluster is running. It's a required field when we create a cluster which is self-hosted via BYO Cloud",
 				Computed:    true,
+				Optional:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -202,10 +207,6 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
-				Create: true,
-				Delete: true,
-			}),
 			"metadata": schema.SingleNestedAttribute{
 				Description: "Additional info of the cluster.",
 				CustomType: types.ObjectType{
@@ -253,16 +254,6 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	// Create() is passed a default timeout to use if no value
-	// has been supplied in the Terraform configuration.
-	createTimeout, diags := plan.Timeouts.Create(ctx, defaultCreateTimeout)
-	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, createTimeout)
-	defer cancel()
-
 	// Generate API request body from plan
 	clusterRequest := controller.MdsClusterCreateRequest{
 		Name:         plan.Name.ValueString(),
@@ -271,6 +262,8 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		Provider:     plan.Provider.ValueString(),
 		Region:       plan.Region.ValueString(),
 		Dedicated:    plan.Dedicated.ValueBool(),
+		Shared:       plan.Shared.ValueBool(),
+		DataPlaneId:  plan.DataPlaneId.ValueString(),
 	}
 	plan.Tags.ElementsAs(ctx, &clusterRequest.Tags, true)
 	plan.NetworkPolicyIds.ElementsAs(ctx, &clusterRequest.NetworkPolicyIds, true)
@@ -418,14 +411,6 @@ func (r *clusterResource) Delete(ctx context.Context, request resource.DeleteReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	deleteTimeout, diags := state.Timeouts.Delete(ctx, defaultDeleteTimeout)
-	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, deleteTimeout)
-	defer cancel()
 
 	// Submit request to delete MDS Cluster
 	_, err := r.client.Controller.DeleteMdsCluster(state.ID.ValueString())

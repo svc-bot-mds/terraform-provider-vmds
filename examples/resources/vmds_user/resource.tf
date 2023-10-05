@@ -3,9 +3,6 @@ resource "vmds_user" "example" {
   tags       = ["new-user", "viewer"]
   role_ids   = ["mds:viewer"]
   policy_ids = ["asdhh4bsd83bfd"]
-  timeouts   = {
-    create = "1m"
-  }
 
   // non editable fields
   lifecycle {
