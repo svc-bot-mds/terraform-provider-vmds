@@ -1,3 +1,25 @@
+
+data vmds_certificates "all" {
+
+}
+
+output "certificate_list" {
+  value = data.vmds_certificates.all
+}
+data vmds_cloud_accounts "all" {
+
+}
+
+output "cloud_accounts" {
+  value = data.vmds_cloud_accounts.all
+}
+data vmds_cloud_provider_regions "all" {
+
+}
+
+output "res" {
+  value = data.vmds_cloud_provider_regions.all
+}
 resource "vmds_byoc_dataplane" "example" {
   name    = "byoc-tf-test-1"
   account_id = "<<cloud account id>>"
