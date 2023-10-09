@@ -18,7 +18,7 @@ Represents a cloud account created on MDS, can be used to create/update/delete/i
 ### Required
 
 - `credential` (String) Holds the credentials associated with the cloud account.
-- `name` (String) Updating the name results in deletion of existing cloud account and new cloud account with updated name is created.
+- `name` (String) Name is readonly field while updating the certificate..
 - `provider_type` (String) Provider Type of cloud account on MDS.
 
 ### Optional

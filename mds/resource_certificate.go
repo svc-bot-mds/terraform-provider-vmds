@@ -90,25 +90,16 @@ func (r *certificateResource) Schema(ctx context.Context, _ resource.SchemaReque
 				},
 			},
 			"name": schema.StringAttribute{
-				Description: "Updating the name results in deletion of existing certificate and new certificate with updated name is created.",
+				Description: "Name is readonly field while updating the certificate.",
 				Required:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
 			},
 			"provider_type": schema.StringAttribute{
-				Description: "Provider Type of certificate on MDS. Updating the provider type results in deletion of existing certificate and new certificate with updated provider type is created",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-				Required: true,
+				Description: "Provider Type of certificate on MDS. It is a readonly field while updating the certificate.",
+				Required:    true,
 			},
 			"domain_name": schema.StringAttribute{
-				Description: "Domain Name of the certificate on MDS. Updating the provider type results in deletion of existing certificate and new certificate with updated provider type is created",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-				Required: true,
+				Description: "Domain Name of the certificate on MDS. It is a readonly field while updating the certificate.",
+				Required:    true,
 			},
 			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
 				Create: true,
