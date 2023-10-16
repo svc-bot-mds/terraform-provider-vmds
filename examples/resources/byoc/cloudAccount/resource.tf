@@ -1,4 +1,3 @@
-
 variable "vrli_cred" {
   description = "VRLI CRED JSON"
   type        = string
@@ -44,6 +43,12 @@ EOF
 
 resource "vmds_cloud_account" "example" {
   name          = "tf-cloud-account1"
-  provider_type = "aws"
-  credential    = var.aws_cred
+  provider_type = "vrli"
+  credential    = var.vrli_cred
+
+  //non editable fields during the update
+  lifecycle {
+    ignore_changes = [name]
+  }
 }
+

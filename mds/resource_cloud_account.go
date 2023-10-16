@@ -79,11 +79,8 @@ func (r *cloudAccountResource) Schema(ctx context.Context, _ resource.SchemaRequ
 				},
 			},
 			"name": schema.StringAttribute{
-				Description: "Updating the name results in deletion of existing cloud account and new cloud account with updated name is created.",
+				Description: "Name is readonly field while updating the certificate..",
 				Required:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
 			},
 			"provider_type": schema.StringAttribute{
 				Description: "Provider Type of cloud account on MDS.",
