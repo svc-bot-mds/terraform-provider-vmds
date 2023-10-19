@@ -4,13 +4,11 @@ page_title: "vmds_certificate Resource - vmds"
 subcategory: ""
 description: |-
   Represents a certificate created on MDS, can be used to create/update/delete/import a certificate.
-  3. Default timeout for creation is 2m0s.
 ---
 
 # vmds_certificate (Resource)
 
 Represents a certificate created on MDS, can be used to create/update/delete/import a certificate.
-3. Default timeout for creation is `2m0s`.
 
 
 
@@ -26,21 +24,10 @@ Represents a certificate created on MDS, can be used to create/update/delete/imp
 - `name` (String) Name is readonly field while updating the certificate.
 - `provider_type` (String) Provider Type of certificate on MDS. It is a readonly field while updating the certificate.
 
-### Optional
-
-- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
-
 ### Read-Only
 
 - `created_by` (String) Email of the user who has created the certificate
 - `expiration_time` (String) Holds the ExpirationTime of the certificate.
 - `id` (String) Auto-generated ID after creating a certificate, and can be passed to import an existing user from MDS to terraform state.
-
-<a id="nestedatt--timeouts"></a>
-### Nested Schema for `timeouts`
-
-Optional:
-
-- `create` (String)
 
 

@@ -21,20 +21,9 @@ Represents a cloud account created on MDS, can be used to create/update/delete/i
 - `name` (String) Name is readonly field while updating the certificate..
 - `provider_type` (String) Provider Type of cloud account on MDS.
 
-### Optional
-
-- `timeouts` (Attributes) (see [below for nested schema](#nestedatt--timeouts))
-
 ### Read-Only
 
 - `id` (String) Auto-generated ID after creating an cloud account, and can be passed to import an existing user from MDS to terraform state.
 - `user_email` (String) Email of the MDS User
-
-<a id="nestedatt--timeouts"></a>
-### Nested Schema for `timeouts`
-
-Optional:
-
-- `create` (String)
 
 
