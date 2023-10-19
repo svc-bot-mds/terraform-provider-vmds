@@ -5,17 +5,12 @@ subcategory: ""
 description: |-
   Represents a service instance or cluster. Some attributes are used only once for creation, they are: dedicated, network_policy_ids.
   Changing only tags is supported at the moment. If you wish to update network policies associated with it, please refer resource: vmds_cluster_network_policies_association.
-  Notes
-  Default timeout for creation is 20m0s.Default timeout for deletion is 5m0s.
 ---
 
 # vmds_cluster (Resource)
 
 Represents a service instance or cluster. Some attributes are used only once for creation, they are: `dedicated`, `network_policy_ids`.
 Changing only `tags` is supported at the moment. If you wish to update network policies associated with it, please refer resource: `vmds_cluster_network_policies_association`.
-## Notes
-1. Default timeout for creation is `20m0s`.
-2. Default timeout for deletion is `5m0s`.
 
 ## Example Usage
 

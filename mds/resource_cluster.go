@@ -25,11 +25,6 @@ import (
 	"time"
 )
 
-const (
-	defaultCreateTimeout = 20 * time.Minute
-	defaultDeleteTimeout = 5 * time.Minute
-)
-
 // Ensure the implementation satisfies the expected interfaces.
 var (
 	_ resource.Resource                = &clusterResource{}
@@ -102,10 +97,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Represents a service instance or cluster. Some attributes are used only once for creation, they are: `dedicated`, `network_policy_ids`." +
 			"\nChanging only `tags` is supported at the moment. If you wish to update network policies associated with it, please refer resource: " +
-			"`vmds_cluster_network_policies_association`.\n" +
-			"## Notes\n" +
-			fmt.Sprintf("1. Default timeout for creation is `%v`.\n", defaultCreateTimeout) +
-			fmt.Sprintf("2. Default timeout for deletion is `%v`.", defaultDeleteTimeout),
+			"`vmds_cluster_network_policies_association`.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "ID of the cluster.",

@@ -11,4 +11,3 @@ resource "vmds_certificate" "example" {
     ignore_changes = [name, provider_type, domain_name]
   }
 }
-

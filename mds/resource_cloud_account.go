@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -90,9 +89,6 @@ func (r *cloudAccountResource) Schema(ctx context.Context, _ resource.SchemaRequ
 				Description: "Email of the MDS User",
 				Computed:    true,
 			},
-			"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
-				Create: true,
-			}),
 			"credential": schema.StringAttribute{
 				MarkdownDescription: "Holds the credentials associated with the cloud account.",
 				Required:            true,
