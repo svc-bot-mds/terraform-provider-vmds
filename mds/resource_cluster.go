@@ -169,7 +169,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			},
 			"network_policy_ids": schema.SetAttribute{
 				Description: "IDs of network policies to attach to the cluster.",
-				Optional:    true,
+				Required:    true,
 				Computed:    false,
 				ElementType: types.StringType,
 				PlanModifiers: []planmodifier.Set{
