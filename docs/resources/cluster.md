@@ -5,17 +5,12 @@ subcategory: ""
 description: |-
   Represents a service instance or cluster. Some attributes are used only once for creation, they are: dedicated, network_policy_ids.
   Changing only tags is supported at the moment. If you wish to update network policies associated with it, please refer resource: vmds_cluster_network_policies_association.
-  Notes
-  Default timeout for creation is 20m0s.Default timeout for deletion is 5m0s.
 ---
 
 # vmds_cluster (Resource)
 
 Represents a service instance or cluster. Some attributes are used only once for creation, they are: `dedicated`, `network_policy_ids`.
 Changing only `tags` is supported at the moment. If you wish to update network policies associated with it, please refer resource: `vmds_cluster_network_policies_association`.
-## Notes
-1. Default timeout for creation is `20m0s`.
-2. Default timeout for deletion is `5m0s`.
 
 ## Example Usage
 
@@ -49,13 +44,13 @@ resource "vmds_cluster" "example" {
 - `instance_size` (String) Size of instance. Supported values are: `XX-SMALL`, `X-SMALL`, `SMALL`, `LARGE`, `XX-LARGE`.
 Please make use of datasource `vmds_network_ports` to decide on a size based on resources it requires.
 - `name` (String) Name of the cluster.
+- `network_policy_ids` (Set of String) IDs of network policies to attach to the cluster.
 - `region` (String) Region of data plane. Ex: `eu-west-2`, `us-east-2` etc.
 
 ### Optional
 
 - `data_plane_id` (String) ID of the data-plane where the cluster is running. It's a required field when we create a cluster which is self-hosted via BYO Cloud
 - `dedicated` (Boolean) If present and set to `true`, the cluster will get deployed on a dedicated data-plane in current Org.
-- `network_policy_ids` (Set of String) IDs of network policies to attach to the cluster.
 - `service_type` (String) Type of MDS Cluster to be created. Supported values: `RABBITMQ` .
  Default is `RABBITMQ`.
 - `shared` (Boolean) If present and set to `true`, the cluster will get deployed on a shared data-plane in current Org.

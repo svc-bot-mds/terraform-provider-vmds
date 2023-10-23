@@ -10,12 +10,17 @@ type MdsPolicy struct {
 	NetworkSpec     []*MdsNetworkSpec     `json:"networkSpecs,omitempty"`
 }
 type MdsPermissionsSpec struct {
-	Resource    string   `json:"resource"`
-	Permissions []string `json:"permissions"`
-	Role        string   `json:"role"`
+	Resource    string            `json:"resource"`
+	Permissions []*MdsPermissions `json:"permissions"`
+	Role        string            `json:"role"`
 }
 
 type MdsNetworkSpec struct {
 	CIDR           string   `json:"cidr"`
 	NetworkPortIds []string `json:"networkPortIds"`
+}
+
+type MdsPermissions struct {
+	Name         string `json:"name"`
+	PermissionId string `json:"permissionId"`
 }
