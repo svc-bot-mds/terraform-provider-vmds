@@ -32,17 +32,12 @@ provider "vmds" {
 
 ### Required
 
-
-
-- `type` (String) OAuthType for the MDS API. It Can be 'api_token' or 'client_credentials'
-
-
-
+- `type` (String) OAuthType for the MDS API. It can be `api_token` or `client_credentials`
 
 ### Optional
 
-- `api_token` (String, Sensitive) API Token for MDS API. May also be provided via MDS_API_TOKEN environment variable.
-- `client_id` (String) Client Id for MDS API. May also be provided via MDS_CLIENT_ID environment variable.
-- `client_secret` (String, Sensitive) Client Secret for MDS API. May also be provided via MDS_CLIENT_SECRET environment variable.
-- `host` (String) URI for MDS API. May also be provided via MDS_HOST environment variable.
-- `org_id` (String) Organization Id for MDS API. May also be provided via MDS_ORG_ID environment variable.
+- `api_token` (String, Sensitive) (Required for `api_token`) API Token for MDS API. May also be provided via *MDS_API_TOKEN* environment variable.
+- `client_id` (String) (Required for `client_credentials`) Client Id for MDS API. May also be provided via *MDS_CLIENT_ID* environment variable.
+- `client_secret` (String, Sensitive) (Required for `client_credentials`) Client Secret for MDS API. May also be provided via *MDS_CLIENT_SECRET* environment variable.
+- `host` (String) URI for MDS API. May also be provided via *MDS_HOST* environment variable.
+- `org_id` (String) (Required for `client_credentials`) Organization Id for MDS API. May also be provided via *MDS_ORG_ID* environment variable.

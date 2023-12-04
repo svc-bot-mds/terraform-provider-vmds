@@ -53,30 +53,30 @@ func (p *mdsProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *
 		Description: "Interact with VMware Managed Data Services",
 		Attributes: map[string]schema.Attribute{
 			"host": schema.StringAttribute{
-				Description: "URI for MDS API. May also be provided via MDS_HOST environment variable.",
-				Optional:    true,
+				MarkdownDescription: "URI for MDS API. May also be provided via *MDS_HOST* environment variable.",
+				Optional:            true,
 			},
 			"type": schema.StringAttribute{
-				Description: "OAuthType for the MDS API. It can be 'api_token' or 'client_credentials'",
-				Required:    true,
+				MarkdownDescription: "OAuthType for the MDS API. It can be `api_token` or `client_credentials`",
+				Required:            true,
 			},
 			"api_token": schema.StringAttribute{
-				Description: "API Token for MDS API. May also be provided via MDS_API_TOKEN environment variable.",
-				Optional:    true,
-				Sensitive:   true,
+				MarkdownDescription: "(Required for `api_token`) API Token for MDS API. May also be provided via *MDS_API_TOKEN* environment variable.",
+				Optional:            true,
+				Sensitive:           true,
 			},
 			"client_id": schema.StringAttribute{
-				Description: "Client Id for MDS API. May also be provided via MDS_CLIENT_ID environment variable.",
-				Optional:    true,
+				MarkdownDescription: "(Required for `client_credentials`) Client Id for MDS API. May also be provided via *MDS_CLIENT_ID* environment variable.",
+				Optional:            true,
 			},
 			"client_secret": schema.StringAttribute{
-				Description: "Client Secret for MDS API. May also be provided via MDS_CLIENT_SECRET environment variable.",
-				Optional:    true,
-				Sensitive:   true,
+				MarkdownDescription: "(Required for `client_credentials`) Client Secret for MDS API. May also be provided via *MDS_CLIENT_SECRET* environment variable.",
+				Optional:            true,
+				Sensitive:           true,
 			},
 			"org_id": schema.StringAttribute{
-				Description: "Organization Id for MDS API. May also be provided via MDS_ORG_ID environment variable.",
-				Optional:    true,
+				MarkdownDescription: "(Required for `client_credentials`) Organization Id for MDS API. May also be provided via *MDS_ORG_ID* environment variable.",
+				Optional:            true,
 			},
 		},
 	}
