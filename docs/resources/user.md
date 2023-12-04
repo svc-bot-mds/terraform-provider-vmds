@@ -16,8 +16,8 @@ Represents an User registered on MDS, can be used to create/update/delete/import
 resource "vmds_user" "example" {
   email      = "developer11@vmware.com"
   tags       = ["new-user", "viewer"]
-  role_ids   = ["mds:Viewer"]
-  policy_ids = ["testtest"]
+  role_ids   = ["mds:viewer"]
+  policy_ids = ["asdhh4bsd83bfd"]
 
   // non editable fields
   lifecycle {

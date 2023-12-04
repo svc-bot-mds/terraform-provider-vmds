@@ -24,9 +24,6 @@ Represents a certificate created on MDS, can be used to create/update/delete/imp
 - `name` (String) Name is readonly field while updating the certificate.
 - `provider_type` (String) Provider Type of certificate on MDS. It is a readonly field while updating the certificate.
 
-### Optional
-
-
 ### Read-Only
 
 - `created_by` (String) Email of the user who has created the certificate
