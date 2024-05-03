@@ -40,6 +40,8 @@ type mdsProviderModel struct {
 	ClientId     types.String `tfsdk:"client_id"`
 	ClientSecret types.String `tfsdk:"client_secret"`
 	OrgId        types.String `tfsdk:"org_id"`
+	Username     types.String `tfsdk:"username"`
+	Password     types.String `tfsdk:"password"`
 }
 
 // Metadata returns the provider type name.
@@ -57,7 +59,7 @@ func (p *mdsProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *
 				Optional:            true,
 			},
 			"type": schema.StringAttribute{
-				MarkdownDescription: "OAuthType for the MDS API. It can be `api_token` or `client_credentials`",
+				MarkdownDescription: "OAuthType for the MDS API. It can be `api_token` or `client_credentials or user_creds`",
 				Required:            true,
 			},
 			"api_token": schema.StringAttribute{
@@ -77,6 +79,15 @@ func (p *mdsProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *
 			"org_id": schema.StringAttribute{
 				MarkdownDescription: "(Required for `client_credentials`) Organization Id for MDS API. May also be provided via *MDS_ORG_ID* environment variable.",
 				Optional:            true,
+			},
+			"username": schema.StringAttribute{
+				MarkdownDescription: "(Required for `user_creds`) Username for MDS API.",
+				Optional:            true,
+			},
+			"password": schema.StringAttribute{
+				MarkdownDescription: "(Required for `user_creds`) Password for MDS API.",
+				Optional:            true,
+				Sensitive:           true,
 			},
 		},
 	}
@@ -145,6 +156,27 @@ func (p *mdsProvider) Configure(ctx context.Context, req provider.ConfigureReque
 		}
 	}
 
+	if config.Type.ValueString() == oauth_type.UserCredentials {
+		if config.Username.IsUnknown() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("Username"),
+				"Unknown MDS API Username",
+				"The provider cannot create the MDS API client as there is an unknown configuration value for the MDS API Username. "+
+					"Either target apply the source of the value first, set the value statically in the configuration, or use the MDS_USERNAME environment variable. ",
+			)
+		}
+
+		if config.Username.IsUnknown() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("Password"),
+				"Unknown MDS API Password",
+				"The provider cannot create the MDS API client as there is an unknown configuration value for the MDS API Password. "+
+					"Either target apply the source of the value first, set the value statically in the configuration, or use the MDS_PASSWORD environment variable. ",
+			)
+		}
+
+	}
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -157,6 +189,8 @@ func (p *mdsProvider) Configure(ctx context.Context, req provider.ConfigureReque
 	clientSecret := os.Getenv("MDS_CLIENT_SECRET")
 	clientId := os.Getenv("MDS_CLIENT_ID")
 	orgId := os.Getenv("MDS_ORG_ID")
+	username := os.Getenv("MDS_USERNAME")
+	password := os.Getenv("MDS_PASSWORD")
 
 	if !config.Host.IsNull() {
 		host = config.Host.ValueString()
@@ -177,6 +211,14 @@ func (p *mdsProvider) Configure(ctx context.Context, req provider.ConfigureReque
 
 		if !config.OrgId.IsNull() {
 			orgId = config.OrgId.ValueString()
+		}
+	}
+	if config.Type.ValueString() == oauth_type.UserCredentials {
+		if !config.Username.IsNull() {
+			username = config.Username.ValueString()
+		}
+		if !config.Password.IsNull() {
+			password = config.Password.ValueString()
 		}
 	}
 
@@ -244,6 +286,10 @@ func (p *mdsProvider) Configure(ctx context.Context, req provider.ConfigureReque
 		ctx = tflog.SetField(ctx, "mds_client_secret", clientSecret)
 		ctx = tflog.SetField(ctx, "mds_org_id", orgId)
 		ctx = tflog.MaskFieldValuesWithFieldKeys(ctx, "mds_client_secret")
+	} else if config.Type.ValueString() == oauth_type.UserCredentials {
+		ctx = tflog.SetField(ctx, "mds_username", username)
+		ctx = tflog.SetField(ctx, "mds_password", password)
+		ctx = tflog.MaskFieldValuesWithFieldKeys(ctx, "mds_password")
 	} else {
 		ctx = tflog.SetField(ctx, "mds_api_token", apiToken)
 		ctx = tflog.MaskFieldValuesWithFieldKeys(ctx, "mds_api_token")
@@ -258,6 +304,8 @@ func (p *mdsProvider) Configure(ctx context.Context, req provider.ConfigureReque
 		ClientId:     clientId,
 		OrgId:        orgId,
 		OAuthAppType: config.Type.ValueString(),
+		Username:     username,
+		Password:     password,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError(
