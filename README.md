@@ -6,7 +6,7 @@ This repository contains code for the Terraform Provider for VMware Managed Data
 
 ## Configuration
 
-The Terraform Provider for VMware MDS is available via the Terraform Registry: [svc-ops-mds/vmds](https://registry.terraform.io/providers/svc-bot-mds/vmds). To be able to use it successfully, please use below snippet to set up the provider:
+The Terraform Provider for VMware MDS is available via the Terraform Registry: [svc-bot-mds/vmds](https://registry.terraform.io/providers/svc-bot-mds/vmds). To be able to use it successfully, please use below snippet to set up the provider:
 
 ```hcl
 terraform {

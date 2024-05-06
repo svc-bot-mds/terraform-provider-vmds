@@ -36,6 +36,12 @@ func (s *Service) GetAccessToken() (*TokenResponse, error) {
 	if s.Api.AuthToUse.OrgId == "" && s.Api.AuthToUse.OAuthAppType == oauth_type.ClientCredentials {
 		return nil, fmt.Errorf("define MDS Org Id")
 	}
+	if s.Api.AuthToUse.Username == "" && s.Api.AuthToUse.OAuthAppType == oauth_type.UserCredentials {
+		return nil, fmt.Errorf("define MDS Username Credentials")
+	}
+	if s.Api.AuthToUse.Password == "" && s.Api.AuthToUse.OAuthAppType == oauth_type.UserCredentials {
+		return nil, fmt.Errorf("define MDS Password")
+	}
 
 	reqUrl := fmt.Sprintf("%s/%s", s.Endpoint, Token)
 
@@ -46,6 +52,8 @@ func (s *Service) GetAccessToken() (*TokenResponse, error) {
 		AccessToken:   s.Api.AuthToUse.AccessToken,
 		OAuthAppTypes: s.Api.AuthToUse.OAuthAppType,
 		OrgId:         s.Api.AuthToUse.OrgId,
+		Username:      s.Api.AuthToUse.Username,
+		Password:      s.Api.AuthToUse.Password,
 	}
 	if s.Api.AuthToUse.OAuthAppType == oauth_type.ClientCredentials {
 		s.Api.OrgId = s.Api.AuthToUse.OrgId
