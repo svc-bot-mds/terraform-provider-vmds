@@ -10,4 +10,6 @@ type ClientAuth struct {
 	AccessToken  string `json:"accessToken"`
 	OrgId        string `json:"orgId"`
 	OAuthAppType string `json:"oAuthAppType"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
 }

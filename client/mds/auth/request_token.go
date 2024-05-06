@@ -7,4 +7,6 @@ type TokenRequest struct {
 	AccessToken   string `json:"accessToken"`
 	OrgId         string `json:"orgId"`
 	OAuthAppTypes string `json:"oAuthAppTypes"`
+	Username      string `json:"username"`
+	Password      string `json:"password"`
 }
