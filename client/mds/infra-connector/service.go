@@ -82,7 +82,7 @@ func (s *Service) GetCertificates(query *MDSCertificateQuery) (model.Paged[model
 		return response, fmt.Errorf("query cannot be nil")
 	}
 
-	reqUrl := fmt.Sprintf("%s/%s", s.Endpoint, Certificate)
+	reqUrl := fmt.Sprintf("%s/%s/%s", s.Endpoint, Internal, Certificate)
 
 	if query.Size == 0 {
 		query.Size = defaultPage.Size
