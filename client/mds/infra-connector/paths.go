@@ -8,4 +8,5 @@ const (
 	CloudProviders = "cloud-providers"
 	TshirtSize     = "t-shirt-size"
 	Certificate    = "certificate"
+	Internal       = "internal"
 )
