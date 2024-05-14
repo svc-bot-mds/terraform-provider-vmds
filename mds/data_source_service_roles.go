@@ -101,8 +101,15 @@ func (d *serviceRolesDatasource) Read(ctx context.Context, req datasource.ReadRe
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 
+	if err := role_type.ValidateRoleType(state.Type.ValueString()); err != nil {
+		resp.Diagnostics.AddError(
+			"invalid type",
+			err.Error())
+		return
+	}
+
 	query := &service_metadata.MDSRolesQuery{
-		Type: role_type.RABBITMQ,
+		Type: state.Type.ValueString(),
 	}
 	rolesResponse, err := d.client.ServiceMetadata.GetMdsServiceRoles(query)
 	if err != nil {

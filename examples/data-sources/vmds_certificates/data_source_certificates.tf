@@ -8,8 +8,10 @@ terraform {
 
 provider "vmds" {
   host      = "https://console.mds.vmware.com"
-  username = "< Username >"
-  password = "< Password > "
+
+  username = " < Username > "
+  password = " < Password > "
+
   type = "user_creds"
 }
 

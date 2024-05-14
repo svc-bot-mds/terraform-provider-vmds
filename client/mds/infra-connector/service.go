@@ -47,7 +47,7 @@ func (s *Service) GetCloudAccounts(query *MdsCloudAccountsQuery) (model.Paged[mo
 		return response, fmt.Errorf("query cannot be nil")
 	}
 
-	reqUrl := fmt.Sprintf("%s/%s", s.Endpoint, CloudAccount)
+	reqUrl := fmt.Sprintf("%s/%s/%s", s.Endpoint, Internal, CloudAccount)
 
 	if query.Size == 0 {
 		query.Size = defaultPage.Size

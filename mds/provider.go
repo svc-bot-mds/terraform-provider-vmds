@@ -166,7 +166,7 @@ func (p *mdsProvider) Configure(ctx context.Context, req provider.ConfigureReque
 			)
 		}
 
-		if config.Username.IsUnknown() {
+		if config.Password.IsUnknown() {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("Password"),
 				"Unknown MDS API Password",
