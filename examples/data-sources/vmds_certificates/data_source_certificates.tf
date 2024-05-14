@@ -7,12 +7,10 @@ terraform {
 }
 
 provider "vmds" {
-  host      = "https://tdh-cp-vh.tdh.kr.com"
+  host      = "https://console.mds.vmware.com"
 
-//  username = "venkatram.amalanathan@broadcom.com"
-//  password = "Signin@07"
-  username = "sre@broadcom.com"
-  password = "VMware$123"
+  username = " < Username > "
+  password = " < Password > "
   type = "user_creds"
 }
 
