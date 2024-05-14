@@ -11,6 +11,7 @@ provider "vmds" {
 
   username = " < Username > "
   password = " < Password > "
+
   type = "user_creds"
 }
 
