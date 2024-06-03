@@ -17,6 +17,6 @@ type MdsInstanceType struct {
 }
 
 type InstanceTypeMetadata struct {
-	MaxConnections int64 `json:"maxConnections,omitempty"`
-	Nodes          int64 `json:"nodes,omitempty"`
+	MaxConnections string `json:"max_connections,omitempty"`
+	Nodes          string `json:"nodes,omitempty"`
 }

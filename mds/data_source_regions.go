@@ -15,7 +15,6 @@ import (
 	infra_connector "github.com/svc-bot-mds/terraform-provider-vmds/client/mds/infra-connector"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/model"
 	"github.com/svc-bot-mds/terraform-provider-vmds/constants/common"
-	"strconv"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -171,7 +170,7 @@ func (d *regionsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	regionQuery.CPU = typeDetail.CPU
 	regionQuery.Memory = typeDetail.Memory
 	regionQuery.Storage = typeDetail.Storage
-	regionQuery.NodeCount = strconv.Itoa(int(typeDetail.Metadata.Nodes))
+	regionQuery.NodeCount = typeDetail.Metadata.Nodes
 	if state.DedicatedDataPlane.ValueBool() {
 		regionQuery.OrgId = d.client.Root.OrgId
 	}
