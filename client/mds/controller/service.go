@@ -151,6 +151,11 @@ func (s *Service) GetServiceInstanceTypes(serviceTypeQuery *MdsInstanceTypesQuer
 	reqUrl := fmt.Sprintf("%s/%s/%s", s.Endpoint, Services, InstanceTypes)
 	var response model.MdsInstanceTypeList
 
+	serviceTypeQuery.ServiceType = serviceTypeQuery.ServiceType
+	if serviceTypeQuery.Size == 0 {
+		serviceTypeQuery.Size = defaultPage.Size
+	}
+
 	_, err := s.Api.Get(&reqUrl, serviceTypeQuery, &response)
 	if err != nil {
 		return response, err

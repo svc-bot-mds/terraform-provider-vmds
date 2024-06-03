@@ -10,6 +10,7 @@ import (
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds/controller"
 	"github.com/svc-bot-mds/terraform-provider-vmds/constants/common"
+	"strconv"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -23,6 +24,7 @@ type instanceTypesDataSourceModel struct {
 	InstanceTypes []instanceTypesModel `tfsdk:"instance_types"`
 	ServiceType   types.String         `tfsdk:"service_type"`
 	Id            types.String         `tfsdk:"id"`
+	//Type          types.String         `tfsdk:"type"`
 }
 
 // instanceTypesModel maps coffees schema data.
@@ -125,18 +127,28 @@ func (d *instanceTypesDataSource) Schema(_ context.Context, _ datasource.SchemaR
 	}
 }
 
-// Read refreshes the Terraform state with the latest data.
+//Read refreshes the Terraform state with the latest data.
+
 func (d *instanceTypesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var state instanceTypesDataSourceModel
+	var state *instanceTypesDataSourceModel
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
-	serviceInstanceTypes, err := d.client.Controller.GetServiceInstanceTypes(&controller.MdsInstanceTypesQuery{
-		ServiceType: service_type.RABBITMQ,
-	})
+
+	if err := service_type.ValidateRoleType(state.ServiceType.ValueString()); err != nil {
+		resp.Diagnostics.AddError(
+			"invalid type",
+			err.Error())
+		return
+	}
+	query := &controller.MdsInstanceTypesQuery{
+		ServiceType: state.ServiceType.ValueString(),
+	}
+	serviceInstanceTypes, err := d.client.Controller.GetServiceInstanceTypes(query)
+
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Unable to Read MDS InstanceTypes",
+			"Unable to Read TDH Service Types",
 			err.Error(),
 		)
 		return
@@ -144,6 +156,28 @@ func (d *instanceTypesDataSource) Read(ctx context.Context, req datasource.ReadR
 
 	// Map response body to model
 	for _, instanceType := range serviceInstanceTypes.InstanceTypes {
+
+		var nodes int64
+		var maxconnections int64
+
+		parsedNodes, err := strconv.ParseInt(instanceType.Metadata.Nodes, 10, 64)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Failed to parse Nodes value",
+				err.Error(),
+			)
+		}
+		nodes = parsedNodes
+
+		parsedMaxconnections, err := strconv.ParseInt(instanceType.Metadata.MaxConnections, 10, 64)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Failed to parse MaxConnections value",
+				err.Error(),
+			)
+		}
+		maxconnections = parsedMaxconnections
+
 		instanceTypesState := instanceTypesModel{
 			ID:           instanceType.ID,
 			InstanceSize: types.StringValue(instanceType.InstanceSize),
@@ -153,8 +187,8 @@ func (d *instanceTypesDataSource) Read(ctx context.Context, req datasource.ReadR
 			Memory:       types.StringValue(instanceType.Memory),
 			Storage:      types.StringValue(instanceType.Storage),
 			Metadata: instanceTypesMetadataModel{
-				MaxConnections: types.Int64Value(instanceType.Metadata.MaxConnections),
-				Nodes:          types.Int64Value(instanceType.Metadata.Nodes),
+				MaxConnections: types.Int64Value(maxconnections),
+				Nodes:          types.Int64Value(nodes),
 			},
 		}
 
