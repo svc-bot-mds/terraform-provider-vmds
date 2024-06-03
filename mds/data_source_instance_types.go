@@ -166,6 +166,7 @@ func (d *instanceTypesDataSource) Read(ctx context.Context, req datasource.ReadR
 				"Failed to parse Nodes value",
 				err.Error(),
 			)
+			return
 		}
 		nodes = parsedNodes
 
@@ -175,6 +176,7 @@ func (d *instanceTypesDataSource) Read(ctx context.Context, req datasource.ReadR
 				"Failed to parse MaxConnections value",
 				err.Error(),
 			)
+			return
 		}
 		maxconnections = parsedMaxconnections
 

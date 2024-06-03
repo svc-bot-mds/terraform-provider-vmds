@@ -171,7 +171,6 @@ func (d *regionsDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	regionQuery.Memory = typeDetail.Memory
 	regionQuery.Storage = typeDetail.Storage
 	regionQuery.NodeCount = typeDetail.Metadata.Nodes
-	//regionQuery.NodeCount = (typeDetail.Metadata.Nodes)
 	if state.DedicatedDataPlane.ValueBool() {
 		regionQuery.OrgId = d.client.Root.OrgId
 	}
