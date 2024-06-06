@@ -42,30 +42,41 @@ type clusterResource struct {
 
 // clusterResourceModel maps the resource schema data.
 type clusterResourceModel struct {
-	ID               types.String `tfsdk:"id"`
-	OrgId            types.String `tfsdk:"org_id"`
-	Name             types.String `tfsdk:"name"`
-	ServiceType      types.String `tfsdk:"service_type"`
-	Provider         types.String `tfsdk:"cloud_provider"`
-	InstanceSize     types.String `tfsdk:"instance_size"`
-	Region           types.String `tfsdk:"region"`
-	Tags             types.Set    `tfsdk:"tags"`
-	NetworkPolicyIds types.Set    `tfsdk:"network_policy_ids"`
-	Dedicated        types.Bool   `tfsdk:"dedicated"`
-	Shared           types.Bool   `tfsdk:"shared"`
-	Status           types.String `tfsdk:"status"`
-	DataPlaneId      types.String `tfsdk:"data_plane_id"`
-	LastUpdated      types.String `tfsdk:"last_updated"`
-	Created          types.String `tfsdk:"created"`
-	Metadata         types.Object `tfsdk:"metadata"`
+	ID                types.String          `tfsdk:"id"`
+	OrgId             types.String          `tfsdk:"org_id"`
+	Name              types.String          `tfsdk:"name"`
+	ServiceType       types.String          `tfsdk:"service_type"`
+	Provider          types.String          `tfsdk:"cloud_provider"`
+	InstanceSize      types.String          `tfsdk:"instance_size"`
+	Region            types.String          `tfsdk:"region"`
+	Tags              types.Set             `tfsdk:"tags"`
+	NetworkPolicyIds  types.Set             `tfsdk:"network_policy_ids"`
+	Dedicated         types.Bool            `tfsdk:"dedicated"`
+	Shared            types.Bool            `tfsdk:"shared"`
+	Status            types.String          `tfsdk:"status"`
+	DataPlaneId       types.String          `tfsdk:"data_plane_id"`
+	LastUpdated       types.String          `tfsdk:"last_updated"`
+	Created           types.String          `tfsdk:"created"`
+	Metadata          types.Object          `tfsdk:"metadata"`
+	Version           types.String          `tfsdk:"version"`
+	StoragePolicyName types.String          `tfsdk:"storage_policy_name"`
+	ClusterMetadata   *clusterMetadataModel `tfsdk:"cluster_metadata"`
 	// TODO add upgrade related fields
 }
 
 // clusterMetadataModel maps order item data.
 type clusterMetadataModel struct {
+	Username    types.String `tfsdk:"username"`
+	Password    types.String `tfsdk:"password"`
+	Database    types.String `tfsdk:"database"`
+	RestoreFrom types.String `tfsdk:"restore_from"`
+	Extensions  types.Set    `tfsdk:"extensions"`
+}
+
+type MetadataModel struct {
 	ManagerUri       types.String `tfsdk:"manager_uri"`
 	ConnectionUri    types.String `tfsdk:"connection_uri"`
-	MetricsEndpoints types.List   `tfsdk:"metrics_endpoints"`
+	MetricsEndpoints types.Set    `tfsdk:"metrics_endpoints"`
 }
 
 func (r *clusterResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -199,13 +210,29 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"version": schema.StringAttribute{
+				Description: "Version of the Postgres cluster.",
+				Required:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"storage_policy_name": schema.StringAttribute{
+				Description: "Name of the storage policy for the cluster.",
+				Required:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 			"metadata": schema.SingleNestedAttribute{
 				Description: "Additional info of the cluster.",
+
 				CustomType: types.ObjectType{
 					AttrTypes: map[string]attr.Type{
+						"cluster_name":   types.StringType,
 						"manager_uri":    types.StringType,
 						"connection_uri": types.StringType,
-						"metrics_endpoints": types.ListType{
+						"metrics_endpoints": types.SetType{
 							ElemType: types.StringType,
 						},
 					},
@@ -215,18 +242,50 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				},
 				Computed: true,
 				Attributes: map[string]schema.Attribute{
+					"cluster_name": schema.StringAttribute{
+						MarkdownDescription: "Name of the cluster. Specific to the service.",
+						Computed:            true,
+					},
 					"manager_uri": schema.StringAttribute{
-						MarkdownDescription: "URI of the manager. Specific to `RABBITMQ` service.",
+						MarkdownDescription: "URI of the manager. Specific to the service.",
 						Computed:            true,
 					},
 					"connection_uri": schema.StringAttribute{
-						MarkdownDescription: "Connection URI to the instance. Specific to `RABBITMQ` service.",
+						MarkdownDescription: "Connection URI to the instance. Specific to the service.",
 						Computed:            true,
 					},
-					"metrics_endpoints": schema.ListAttribute{
-						MarkdownDescription: "List of metrics endpoints exposed on the instance. Specific to `RABBITMQ` service.",
+					"metrics_endpoints": schema.SetAttribute{
+						MarkdownDescription: "List of metrics endpoints exposed on the instance. Specific to the service.",
 						Computed:            true,
 						ElementType:         types.StringType,
+					},
+				},
+			},
+			"cluster_metadata": schema.SingleNestedAttribute{
+				Description: "Additional info for the cluster.",
+				Required:    true,
+				Attributes: map[string]schema.Attribute{
+					"username": schema.StringAttribute{
+						Description: "Username for the cluster.",
+						Required:    true,
+					},
+					"password": schema.StringAttribute{
+						Description: "Password for the cluster.",
+						Required:    true,
+					},
+					"database": schema.StringAttribute{
+						Description: "Database name in the cluster.",
+						Required:    false,
+						Optional:    true,
+					},
+					"restore_from": schema.StringAttribute{
+						Description: "Restore from a specific backup.",
+						Optional:    true,
+					},
+					"extensions": schema.SetAttribute{
+						Description: "Set of extensions to be enabled on the cluster.",
+						Optional:    true,
+						ElementType: types.StringType,
 					},
 				},
 			},
@@ -241,24 +300,45 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	tflog.Info(ctx, "INIT__Create")
 	// Retrieve values from plan
 	var plan clusterResourceModel
+
+	tflog.Info(ctx, "INIT__Fetching plan")
 	diags := req.Plan.Get(ctx, &plan)
+	tflog.Info(ctx, "INIT__Fetched plan")
+
 	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
+	tflog.Info(ctx, "INIT__Creating req body")
 
 	// Generate API request body from plan
 	clusterRequest := controller.MdsClusterCreateRequest{
-		Name:         plan.Name.ValueString(),
-		ServiceType:  plan.ServiceType.ValueString(),
-		InstanceSize: plan.InstanceSize.ValueString(),
-		Provider:     plan.Provider.ValueString(),
-		Region:       plan.Region.ValueString(),
-		Dedicated:    plan.Dedicated.ValueBool(),
-		Shared:       plan.Shared.ValueBool(),
-		DataPlaneId:  plan.DataPlaneId.ValueString(),
+		Name:              plan.Name.ValueString(),
+		ServiceType:       plan.ServiceType.ValueString(),
+		InstanceSize:      plan.InstanceSize.ValueString(),
+		Provider:          plan.Provider.ValueString(),
+		Region:            plan.Region.ValueString(),
+		Dedicated:         plan.Dedicated.ValueBool(),
+		Shared:            plan.Shared.ValueBool(),
+		DataPlaneId:       plan.DataPlaneId.ValueString(),
+		Version:           plan.Version.ValueString(),
+		StoragePolicyName: plan.StoragePolicyName.ValueString(),
+		ClusterMetadata: controller.PostgresClusterMetadata{
+			Username: plan.ClusterMetadata.Username.ValueString(),
+			Password: plan.ClusterMetadata.Password.ValueString(),
+			Database: plan.ClusterMetadata.Database.ValueString(),
+		},
 	}
+
+	plan.ClusterMetadata.Extensions.ElementsAs(ctx, &clusterRequest.ClusterMetadata.Extensions, true)
+	tflog.Info(ctx, "INIT__Created req body")
+	tflog.Info(ctx, "Creating cluster", map[string]interface{}{
+		"cluster_request": clusterRequest,
+	})
+
 	plan.Tags.ElementsAs(ctx, &clusterRequest.Tags, true)
 	plan.NetworkPolicyIds.ElementsAs(ctx, &clusterRequest.NetworkPolicyIds, true)
+
+	tflog.Info(ctx, "INIT__Submitting request")
 
 	if _, err := r.client.Controller.CreateMdsCluster(&clusterRequest); err != nil {
 		resp.Diagnostics.AddError(
@@ -267,7 +347,7 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		)
 		return
 	}
-
+	tflog.Info(ctx, "INIT__Fetching clusters")
 	clusters, err := r.client.Controller.GetMdsClusters(&controller.MdsClustersQuery{
 		ServiceType:   clusterRequest.ServiceType,
 		Name:          clusterRequest.Name,
@@ -305,6 +385,7 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			}
 		}
 	}
+	tflog.Info(ctx, "INIT__Saving Response")
 	if saveFromResponse(&ctx, &resp.Diagnostics, &plan, createdCluster) != 0 {
 		return
 	}
@@ -330,8 +411,10 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
+	tflog.Debug(ctx, "INIT_Read Fetching Cluster from API")
 	// Get refreshed cluster value from MDS
 	cluster, err := r.client.Controller.GetMdsCluster(state.ID.ValueString())
+	tflog.Debug(ctx, "INIT__Read fetched cluster", map[string]interface{}{"dto": cluster})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Reading MDS Cluster",
@@ -340,6 +423,7 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
+	tflog.Debug(ctx, "INIT__Read converting response")
 	// Overwrite items with refreshed state
 	if saveFromResponse(&ctx, &resp.Diagnostics, &state, cluster) != 0 {
 		return
@@ -455,26 +539,11 @@ func saveFromResponse(ctx *context.Context, diagnostics *diag.Diagnostics, state
 		"obj": cluster.Metadata,
 	})
 
-	metadataModel := clusterMetadataModel{
-		ManagerUri:       types.StringValue(""),
-		ConnectionUri:    types.StringValue(""),
-		MetricsEndpoints: types.ListNull(types.StringType),
-	}
-	if cluster.Metadata != nil {
-		list, diags := types.ListValueFrom(*ctx, types.StringType, cluster.Metadata.MetricsEndpoints)
-		if diagnostics.Append(diags...); diagnostics.HasError() {
-			return 1
-		}
-		metadataModel.ManagerUri = types.StringValue(cluster.Metadata.ManagerUri)
-		metadataModel.ConnectionUri = types.StringValue(cluster.Metadata.ConnectionUri)
-		metadataModel.MetricsEndpoints = list
-	}
-	metadataObject, diags := types.ObjectValueFrom(*ctx, state.Metadata.AttributeTypes(*ctx), metadataModel)
+	metadataObject, diags := types.ObjectValueFrom(*ctx, state.Metadata.AttributeTypes(*ctx), cluster.Metadata)
 	if diagnostics.Append(diags...); diagnostics.HasError() {
 		return 1
 	}
 	state.Metadata = metadataObject
-
 	list, diags := types.SetValueFrom(*ctx, types.StringType, cluster.Tags)
 	if diagnostics.Append(diags...); diagnostics.HasError() {
 		return 1

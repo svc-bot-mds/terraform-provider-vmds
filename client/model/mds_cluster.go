@@ -24,9 +24,8 @@ type MdsCluster struct {
 }
 
 type MdsClusterMetadata struct {
-	ClusterName           string   `json:"clusterName,omitempty"`
-	ManagerUri            string   `json:"managerUri,omitempty"`
-	ConnectionUri         string   `json:"connectionUri,omitempty"`
-	ConnectionCredentials string   `json:"connectionCredentials,omitempty"`
-	MetricsEndpoints      []string `json:"metricsEnpoints"`
+	ClusterName      string   `json:"clusterName,omitempty" tfsdk:"cluster_name"`
+	ManagerUri       string   `json:"managerUri,omitempty" tfsdk:"manager_uri"`
+	ConnectionUri    string   `json:"connectionUri,omitempty" tfsdk:"connection_uri"`
+	MetricsEndpoints []string `json:"metricsEnpoints" tfsdk:"metrics_endpoints"`
 }
