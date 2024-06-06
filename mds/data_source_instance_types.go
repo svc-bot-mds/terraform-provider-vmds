@@ -160,7 +160,8 @@ func (d *instanceTypesDataSource) Read(ctx context.Context, req datasource.ReadR
 		var nodes int64
 		var maxconnections int64
 
-		parsedNodes, err := strconv.ParseInt(instanceType.Metadata.Nodes, 10, 64)
+		nodes, err := strconv.ParseInt(instanceType.Metadata.Nodes, 10, 64)
+
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Failed to parse Nodes value",
@@ -168,9 +169,9 @@ func (d *instanceTypesDataSource) Read(ctx context.Context, req datasource.ReadR
 			)
 			return
 		}
-		nodes = parsedNodes
 
-		parsedMaxconnections, err := strconv.ParseInt(instanceType.Metadata.MaxConnections, 10, 64)
+		maxconnections, err = strconv.ParseInt(instanceType.Metadata.MaxConnections, 10, 64)
+
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Failed to parse MaxConnections value",
@@ -178,7 +179,7 @@ func (d *instanceTypesDataSource) Read(ctx context.Context, req datasource.ReadR
 			)
 			return
 		}
-		maxconnections = parsedMaxconnections
+
 
 		instanceTypesState := instanceTypesModel{
 			ID:           instanceType.ID,
