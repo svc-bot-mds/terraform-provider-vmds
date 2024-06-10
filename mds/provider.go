@@ -107,80 +107,6 @@ func (p *mdsProvider) Configure(ctx context.Context, req provider.ConfigureReque
 	// If practitioner provided a configuration value for any of the
 	// attributes, it must be a known value.
 
-	//TODO read also from env variables
-	if config.Host.IsUnknown() {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("host"),
-			"Unknown MDS API Host",
-			"The provider cannot create the MDS API client as there is an unknown configuration value for the MDS API host. "+
-				"Either target apply the source of the value first, set the value statically in the configuration, or use the MDS_HOST environment variable.",
-		)
-	}
-	if config.Type.ValueString() == oauth_type.ApiToken {
-		if config.ApiToken.IsUnknown() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("ApiToken"),
-				"Unknown MDS API Token",
-				"The provider cannot create the MDS API client as there is an unknown configuration value for the MDS API Token. "+
-					"Either target apply the source of the value first, set the value statically in the configuration, or use the MDS_API_TOKEN environment variable.",
-			)
-		}
-	}
-
-	if config.Type.ValueString() == oauth_type.ClientCredentials {
-		if config.ClientId.IsUnknown() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("ClientId"),
-				"Unknown MDS API ClientId",
-				"The provider cannot create the MDS API client as there is an unknown configuration value for the MDS API ClientId. "+
-					"Either target apply the source of the value first, set the value statically in the configuration, or use the MDS_CLIENT_ID environment variable.",
-			)
-		}
-
-		if config.ClientSecret.IsUnknown() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("client_secret"),
-				"Unknown MDS API Client Secret",
-				"The provider cannot create the MDS API client as there is an unknown configuration value for the MDS API password. "+
-					"Either target apply the source of the value first, set the value statically in the configuration, or use the MDS_CLIENT_SECRET environment variable.",
-			)
-		}
-
-		if config.OrgId.IsUnknown() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("org id"),
-				"Unknown MDS API Org Id",
-				"The provider cannot create the MDS API client as there is an unknown configuration value for the MDS API Org Id. "+
-					"Either target apply the source of the value first, set the value statically in the configuration, or use the MDS_ORG_ID environment variable.",
-			)
-		}
-	}
-
-	if config.Type.ValueString() == oauth_type.UserCredentials {
-		if config.Username.IsUnknown() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("Username"),
-				"Unknown MDS API Username",
-				"The provider cannot create the MDS API client as there is an unknown configuration value for the MDS API Username. "+
-					"Either target apply the source of the value first, set the value statically in the configuration, or use the MDS_USERNAME environment variable. ",
-			)
-		}
-
-		if config.Password.IsUnknown() {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("Password"),
-				"Unknown MDS API Password",
-				"The provider cannot create the MDS API client as there is an unknown configuration value for the MDS API Password. "+
-					"Either target apply the source of the value first, set the value statically in the configuration, or use the MDS_PASSWORD environment variable. ",
-			)
-		}
-
-	}
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	// Default values to environment variables, but override
 	// with Terraform configuration value if set.
 
@@ -219,6 +145,9 @@ func (p *mdsProvider) Configure(ctx context.Context, req provider.ConfigureReque
 		}
 		if !config.Password.IsNull() {
 			password = config.Password.ValueString()
+		}
+		if !config.OrgId.IsNull() {
+			orgId = config.OrgId.ValueString()
 		}
 	}
 	// If any of the expected configurations are missing, return
@@ -271,6 +200,35 @@ func (p *mdsProvider) Configure(ctx context.Context, req provider.ConfigureReque
 				"The provider cannot create the MDS API client as there is a missing or empty value for the MDS API Org Id. "+
 					"Set the password value in the configuration or use the MDS_ORG_ID environment variable. "+
 					"If either is already set, ensure the value is not empty.",
+			)
+		}
+	}
+
+	if config.Type.ValueString() == oauth_type.UserCredentials {
+		if username == "" {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("Username"),
+				"Unknown MDS API Username",
+				"The provider cannot create the MDS API client as there is an unknown configuration value for the MDS API Username. "+
+					"Either target apply the source of the value first, set the value statically in the configuration, or use the MDS_USERNAME environment variable. ",
+			)
+		}
+
+		if password == "" {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("Password"),
+				"Unknown MDS API Password",
+				"The provider cannot create the MDS API client as there is an unknown configuration value for the MDS API Password. "+
+					"Either target apply the source of the value first, set the value statically in the configuration, or use the MDS_PASSWORD environment variable. ",
+			)
+		}
+
+		if orgId == "" {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("org id"),
+				"Unknown MDS API Org Id",
+				"The provider cannot create the MDS API client as there is an unknown configuration value for the MDS API Org Id. "+
+					"Either target apply the source of the value first, set the value statically in the configuration, or use the MDS_ORG_ID environment variable.",
 			)
 		}
 	}
