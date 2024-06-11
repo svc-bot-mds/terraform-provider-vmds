@@ -1,8 +1,5 @@
 package model
 
-type MdsUpgradeServiceRequest struct {
-}
-
 // UpdateMdsClusterVersionRequest represents the request structure for updating the cluster version
 type UpdateMdsClusterVersionRequest struct {
 	Id            string `json:"id"`
