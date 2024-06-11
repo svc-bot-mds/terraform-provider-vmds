@@ -32,8 +32,6 @@ func (s *Service) UpdateMdsClusterVersion(id string, requestBody *UpdateMdsClust
 	urlPath := fmt.Sprintf("%s/%s", s.Endpoint, Upgrade)
 	var response model.UpdateMdsClusterVersionResponse
 
-	fmt.Println("Version update Request : ", requestBody)
-	fmt.Println("Version update Request : ", &requestBody)
 	_, err := s.Api.Post(&urlPath, requestBody, &response)
 	if err != nil {
 		return &response, err
