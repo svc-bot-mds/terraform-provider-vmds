@@ -20,6 +20,7 @@ import (
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds/controller"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds/core"
+	upgrade_service "github.com/svc-bot-mds/terraform-provider-vmds/client/mds/upgrade-service"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/model"
 	"net/http"
 	"time"
@@ -61,6 +62,7 @@ type clusterResourceModel struct {
 	Version           types.String          `tfsdk:"version"`
 	StoragePolicyName types.String          `tfsdk:"storage_policy_name"`
 	ClusterMetadata   *clusterMetadataModel `tfsdk:"cluster_metadata"`
+	Upgrade           *upgradeMetadata      `tfsdk:"upgrade"`
 	// TODO add upgrade related fields
 }
 
@@ -77,6 +79,11 @@ type MetadataModel struct {
 	ManagerUri       types.String `tfsdk:"manager_uri"`
 	ConnectionUri    types.String `tfsdk:"connection_uri"`
 	MetricsEndpoints types.Set    `tfsdk:"metrics_endpoints"`
+}
+
+type upgradeMetadata struct {
+	TargetVersion types.String `tfsdk:"target_version"`
+	OmitBackup    types.Bool   `tfsdk:"omit_backup"`
 }
 
 func (r *clusterResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -143,6 +150,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			"cloud_provider": schema.StringAttribute{
 				MarkdownDescription: "Short-code of provider to use for data-plane. Ex: `aws`, `gcp` .",
 				Required:            true,
+				Optional:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -158,6 +166,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			"region": schema.StringAttribute{
 				MarkdownDescription: "Region of data plane. Ex: `eu-west-2`, `us-east-2` etc.",
 				Required:            true,
+				Optional:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
@@ -213,6 +222,7 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			"version": schema.StringAttribute{
 				Description: "Version of the Postgres cluster.",
 				Required:    true,
+				Optional:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -286,6 +296,21 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 						Description: "Set of extensions to be enabled on the cluster.",
 						Optional:    true,
 						ElementType: types.StringType,
+					},
+				},
+			},
+			"upgrade": schema.SingleNestedAttribute{
+				Description: "To create the backup or not while upgrading",
+				Required:    false,
+				Optional:    true,
+				Attributes: map[string]schema.Attribute{
+					"target_version": schema.StringAttribute{
+						Description: "To Upgrade version",
+						Optional:    true,
+					},
+					"omit_backup": schema.BoolAttribute{
+						Description: "set to take backup before upgrade",
+						Optional:    true,
 					},
 				},
 			},
@@ -448,6 +473,60 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	// Retrieve current state
+	var state clusterResourceModel
+	diags = req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Detect version change
+	if plan.Upgrade.TargetVersion != state.Version {
+		tflog.Info(ctx, "Version change detected", map[string]interface{}{
+			"old_version": state.Version.ValueString(),
+			"new_version": plan.Upgrade.TargetVersion.ValueString(),
+		})
+
+		omitBackup := plan.Upgrade.OmitBackup.ValueBool()
+		// Generate API request to update the version
+		versionUpdateRequest := upgrade_service.UpdateMdsClusterVersionRequest{
+			Id:            state.ID.ValueString(),
+			TargetVersion: plan.Upgrade.TargetVersion.ValueString(),
+			RequestType:   "SERVICE",
+			Metadata:      upgrade_service.UpdateMdsClusterVersionRequestMetadata{OmitBackup: omitBackup},
+		}
+
+		fmt.Println(versionUpdateRequest)
+
+		// Call the API to update the version
+		_, err := r.client.UpgradeService.UpdateMdsClusterVersion(state.ID.ValueString(), &versionUpdateRequest)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Updating Cluster Version",
+				"Could not update cluster version, unexpected error: "+err.Error(),
+			)
+			return
+		}
+
+		// Wait for the version update to complete
+		for {
+			time.Sleep(10 * time.Second)
+			updatedCluster, err := r.client.Controller.GetMdsCluster(state.ID.ValueString())
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Fetching Updated Cluster",
+					"Could not fetch updated cluster by ID, unexpected error: "+err.Error(),
+				)
+				return
+			}
+			if updatedCluster.Version == plan.Version.ValueString() {
+				tflog.Info(ctx, "Cluster version updated successfully")
+				break
+			}
+		}
 	}
 
 	// Generate API request body from plan

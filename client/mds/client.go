@@ -8,6 +8,7 @@ import (
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds/customer-metadata"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds/infra-connector"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds/service-metadata"
+	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds/upgrade-service"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/model"
 	"net/http"
 	"strings"
@@ -25,6 +26,7 @@ type Client struct {
 	InfraConnector   *infra_connector.Service
 	CustomerMetadata *customer_metadata.Service
 	ServiceMetadata  *service_metadata.Service
+	UpgradeService   *upgrade_service.Service
 }
 
 // NewClient -
@@ -60,6 +62,7 @@ func prepareClient(host *string, root *core.Root) *Client {
 		InfraConnector:   infra_connector.NewService(host, root),
 		CustomerMetadata: customer_metadata.NewService(host, root),
 		ServiceMetadata:  service_metadata.NewService(host, root),
+		UpgradeService:   upgrade_service.NewService(host, root),
 	}
 }
 
