@@ -18,7 +18,7 @@ var (
 
 type providerTypesDataSourceModel struct {
 	Id            types.String `tfsdk:"id"`
-	ProviderTypes []string     `tfsdk:"provider_types"`
+	ProviderTypes []string     `tfsdk:"list"`
 }
 
 func NewProviderTypesDataSource() datasource.DataSource {
@@ -36,13 +36,13 @@ func (d *providerTypesDataSource) Metadata(_ context.Context, req datasource.Met
 
 func (d *providerTypesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Used to fetch types of providers supported by BYOC.",
+		Description: "Used to fetch types of providers supported by MDS.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "The testing framework requires an id attribute to be present in every data source and resource.",
 			},
-			"provider_types": schema.SetAttribute{
+			"list": schema.ListAttribute{
 				Description: "List of provider types.",
 				Computed:    true,
 				ElementType: types.StringType,

@@ -199,7 +199,7 @@ func (s *Service) CreateCloudAccount(requestBody *CloudAccountCreateRequest) (*m
 		return nil, fmt.Errorf("requestBody cannot be nil")
 	}
 	var response model.MdsCloudAccount
-	urlPath := fmt.Sprintf("%s/%s", s.Endpoint, CloudAccount)
+	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, Internal, CloudAccount)
 
 	_, err := s.Api.Post(&urlPath, requestBody, &response)
 	if err != nil {
@@ -210,7 +210,7 @@ func (s *Service) CreateCloudAccount(requestBody *CloudAccountCreateRequest) (*m
 }
 
 // UpdateCloudAccount - To Update the cloud account
-func (s *Service) UpdateCloudAccount(id string, requestBody *CredentialModel) error {
+func (s *Service) UpdateCloudAccount(id string, requestBody *CloudAccountUpdateRequest) error {
 
 	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, CloudAccount, id)
 	_, err := s.Api.Put(&urlPath, requestBody, nil)

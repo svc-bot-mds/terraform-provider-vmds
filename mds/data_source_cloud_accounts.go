@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/svc-bot-mds/terraform-provider-vmds/client/mds"
 	infra_connector "github.com/svc-bot-mds/terraform-provider-vmds/client/mds/infra-connector"
+	"github.com/svc-bot-mds/terraform-provider-vmds/client/model"
 	"github.com/svc-bot-mds/terraform-provider-vmds/constants/common"
 )
 
@@ -23,11 +24,19 @@ type cloudAccountsDatasourceModel struct {
 }
 
 type cloudAccountModel struct {
-	ID          types.String `tfsdk:"id"`
-	Name        types.String `tfsdk:"name"`
-	AccountType types.String `tfsdk:"account_type"`
-	Email       types.String `tfsdk:"user_email"`
-	OrgId       types.String `tfsdk:"org_id"`
+	ID             types.String `tfsdk:"id"`
+	Name           types.String `tfsdk:"name"`
+	ProviderType   types.String `tfsdk:"provider_type"`
+	Shared         types.Bool   `tfsdk:"shared"`
+	Tags           types.Set    `tfsdk:"tags"`
+	UserEmail      types.String `tfsdk:"user_email"`
+	OrgId          types.String `tfsdk:"org_id"`
+	DataPlaneCount types.Int64  `tfsdk:"data_plane_count"`
+	CreatedAt      types.String `tfsdk:"created_at"`
+	CreatedBy      types.String `tfsdk:"created_by"`
+	ModifiedAt     types.String `tfsdk:"modified_at"`
+	ModifiedBy     types.String `tfsdk:"modified_by"`
+	ManagementIp   types.String `tfsdk:"management_ip"`
 }
 
 // NewCloudAccountsDatasource is a helper function to simplify the provider implementation.
@@ -67,7 +76,7 @@ func (d *cloudAccountsDatasource) Schema(_ context.Context, _ datasource.SchemaR
 							Description: "Name of the cloud account.",
 							Computed:    true,
 						},
-						"account_type": schema.StringAttribute{
+						"provider_type": schema.StringAttribute{
 							Description: "Account type of the cloud account",
 							Computed:    true,
 						},
@@ -77,6 +86,39 @@ func (d *cloudAccountsDatasource) Schema(_ context.Context, _ datasource.SchemaR
 						},
 						"org_id": schema.StringAttribute{
 							Description: "OrgId of the cloud account",
+							Computed:    true,
+						},
+						"shared": schema.BoolAttribute{
+							Description: "Whether this account is shared between multiple Organisations or not.",
+							Computed:    true,
+						},
+						"data_plane_count": schema.Int64Attribute{
+							Description: "Total data planes associated with this account.",
+							Computed:    true,
+						},
+						"tags": schema.SetAttribute{
+							Description: "Tags set on this account.",
+							ElementType: types.StringType,
+							Computed:    true,
+						},
+						"created_at": schema.StringAttribute{
+							Description: "Creation time of this account.",
+							Computed:    true,
+						},
+						"created_by": schema.StringAttribute{
+							Description: "User which created this account.",
+							Computed:    true,
+						},
+						"modified_at": schema.StringAttribute{
+							Description: "Last time this account was modified.",
+							Computed:    true,
+						},
+						"modified_by": schema.StringAttribute{
+							Description: "User which last modified this account.",
+							Computed:    true,
+						},
+						"management_ip": schema.StringAttribute{
+							Description: "IP of the management console.",
 							Computed:    true,
 						},
 					},
@@ -117,12 +159,9 @@ func (d *cloudAccountsDatasource) Read(ctx context.Context, req datasource.ReadR
 			}
 
 			for _, cloudAccountDto := range *totalCloudAccounts.Get() {
-				cloudAccount := cloudAccountModel{
-					ID:          types.StringValue(cloudAccountDto.Id),
-					Name:        types.StringValue(cloudAccountDto.Name),
-					AccountType: types.StringValue(cloudAccountDto.AccountType),
-					Email:       types.StringValue(cloudAccountDto.Email),
-					OrgId:       types.StringValue(cloudAccountDto.OrgId),
+				cloudAccount, err := d.convertToTfModel(ctx, cloudAccountDto, resp)
+				if err {
+					return
 				}
 				cloudAccountList = append(cloudAccountList, cloudAccount)
 			}
@@ -133,12 +172,9 @@ func (d *cloudAccountsDatasource) Read(ctx context.Context, req datasource.ReadR
 	} else {
 		for _, cloudAccountDto := range *cloudAccounts.Get() {
 			tflog.Info(ctx, "Converting cloud account dto")
-			cloudAccount := cloudAccountModel{
-				ID:          types.StringValue(cloudAccountDto.Id),
-				Name:        types.StringValue(cloudAccountDto.Name),
-				AccountType: types.StringValue(cloudAccountDto.AccountType),
-				Email:       types.StringValue(cloudAccountDto.Email),
-				OrgId:       types.StringValue(cloudAccountDto.OrgId),
+			cloudAccount, err := d.convertToTfModel(ctx, cloudAccountDto, resp)
+			if err {
+				return
 			}
 			tflog.Debug(ctx, "converted cloud Account dto", map[string]interface{}{"dto": cloudAccount})
 			state.CloudAccounts = append(state.CloudAccounts, cloudAccount)
@@ -151,6 +187,28 @@ func (d *cloudAccountsDatasource) Read(ctx context.Context, req datasource.ReadR
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+func (d *cloudAccountsDatasource) convertToTfModel(ctx context.Context, cloudAccountDto model.MdsCloudAccount, resp *datasource.ReadResponse) (cloudAccountModel, bool) {
+	cloudAccount := cloudAccountModel{
+		ID:             types.StringValue(cloudAccountDto.Id),
+		Name:           types.StringValue(cloudAccountDto.Name),
+		ProviderType:   types.StringValue(cloudAccountDto.AccountType),
+		UserEmail:      types.StringValue(cloudAccountDto.Email),
+		OrgId:          types.StringValue(cloudAccountDto.OrgId),
+		Shared:         types.BoolValue(cloudAccountDto.Shared),
+		DataPlaneCount: types.Int64Value(cloudAccountDto.DataPlaneCount),
+		CreatedAt:      types.StringValue(cloudAccountDto.Created),
+		CreatedBy:      types.StringValue(cloudAccountDto.CreatedBy),
+		ModifiedAt:     types.StringValue(cloudAccountDto.Modified),
+		ModifiedBy:     types.StringValue(cloudAccountDto.ModifiedBy),
+	}
+	list, diags := types.SetValueFrom(ctx, types.StringType, cloudAccountDto.Tags)
+	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
+		return cloudAccountModel{}, true
+	}
+	cloudAccount.Tags = list
+	return cloudAccount, false
 }
 
 // Configure adds the provider configured client to the data source.

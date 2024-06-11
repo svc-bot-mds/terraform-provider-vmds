@@ -150,7 +150,6 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			"cloud_provider": schema.StringAttribute{
 				MarkdownDescription: "Short-code of provider to use for data-plane. Ex: `aws`, `gcp` .",
 				Required:            true,
-				Optional:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -166,7 +165,6 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 			"region": schema.StringAttribute{
 				MarkdownDescription: "Region of data plane. Ex: `eu-west-2`, `us-east-2` etc.",
 				Required:            true,
-				Optional:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
@@ -220,9 +218,8 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				},
 			},
 			"version": schema.StringAttribute{
-				Description: "Version of the Postgres cluster.",
+				Description: "Version of the cluster.",
 				Required:    true,
-				Optional:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -253,19 +250,19 @@ func (r *clusterResource) Schema(ctx context.Context, _ resource.SchemaRequest, 
 				Computed: true,
 				Attributes: map[string]schema.Attribute{
 					"cluster_name": schema.StringAttribute{
-						MarkdownDescription: "Name of the cluster. Specific to the service.",
+						MarkdownDescription: "Name of the cluster.",
 						Computed:            true,
 					},
 					"manager_uri": schema.StringAttribute{
-						MarkdownDescription: "URI of the manager. Specific to the service.",
+						MarkdownDescription: "URI of the manager.",
 						Computed:            true,
 					},
 					"connection_uri": schema.StringAttribute{
-						MarkdownDescription: "Connection URI to the instance. Specific to the service.",
+						MarkdownDescription: "Connection URI to the instance.",
 						Computed:            true,
 					},
 					"metrics_endpoints": schema.SetAttribute{
-						MarkdownDescription: "List of metrics endpoints exposed on the instance. Specific to the service.",
+						MarkdownDescription: "List of metrics endpoints exposed on the instance.",
 						Computed:            true,
 						ElementType:         types.StringType,
 					},

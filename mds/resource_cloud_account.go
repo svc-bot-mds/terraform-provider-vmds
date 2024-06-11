@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -34,11 +35,16 @@ type cloudAccountResource struct {
 }
 
 type CloudAccountResourceModel struct {
-	ID           types.String `tfsdk:"id"`
-	Name         types.String `tfsdk:"name"`
-	ProviderType types.String `tfsdk:"provider_type"`
-	UserEmail    types.String `tfsdk:"user_email"`
-	Credential   types.String `tfsdk:"credential"`
+	ID             types.String `tfsdk:"id"`
+	Name           types.String `tfsdk:"name"`
+	ProviderType   types.String `tfsdk:"provider_type"`
+	Shared         types.Bool   `tfsdk:"shared"`
+	Credential     types.String `tfsdk:"credentials"`
+	Tags           types.Set    `tfsdk:"tags"`
+	UserEmail      types.String `tfsdk:"user_email"`
+	OrgId          types.String `tfsdk:"org_id"`
+	CreatedBy      types.String `tfsdk:"created_by"`
+	DataPlaneCount types.Int64  `tfsdk:"data_plane_count"`
 }
 
 func (r *cloudAccountResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -78,20 +84,52 @@ func (r *cloudAccountResource) Schema(ctx context.Context, _ resource.SchemaRequ
 				},
 			},
 			"name": schema.StringAttribute{
-				Description: "Name is readonly field while updating the certificate..",
+				Description: "Name is readonly field while updating the certificate. Updating it will result in creating new account.",
 				Required:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"provider_type": schema.StringAttribute{
-				Description: "Provider Type of cloud account on MDS.",
+				Description: "Provider Type of cloud account on MDS. Change not allowed after creation.",
 				Required:    true,
+			},
+			"tags": schema.SetAttribute{
+				Description: "Tags to set on this account.",
+				Optional:    true,
+				ElementType: types.StringType,
 			},
 			"user_email": schema.StringAttribute{
 				Description: "Email of the MDS User",
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
-			"credential": schema.StringAttribute{
+			"shared": schema.BoolAttribute{
+				Description: "Whether this account will be shared between multiple Organisations or not. Change not allowed after creation.",
+				Required:    true,
+			},
+			"org_id": schema.StringAttribute{
+				MarkdownDescription: "Org ID. Required for `shared` cloud account. Change not allowed after creation.",
+				Computed:            true,
+				Optional:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"credentials": schema.StringAttribute{
 				MarkdownDescription: "Holds the credentials associated with the cloud account.",
 				Required:            true,
+				Sensitive:           true,
+			},
+			"created_by": schema.StringAttribute{
+				Description: "User which created this account.",
+				Computed:    true,
+			},
+			"data_plane_count": schema.Int64Attribute{
+				Description: "Total data planes associated with this account.",
+				Computed:    true,
 			},
 		},
 	}
@@ -104,6 +142,7 @@ func (r *cloudAccountResource) Create(ctx context.Context, req resource.CreateRe
 	tflog.Info(ctx, "INIT__Create")
 	// Retrieve values from plan
 	var plan CloudAccountResourceModel
+
 	diags := req.Plan.Get(ctx, &plan)
 	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
@@ -124,9 +163,11 @@ func (r *cloudAccountResource) Create(ctx context.Context, req resource.CreateRe
 		Name:         plan.Name.ValueString(),
 		ProviderType: plan.ProviderType.ValueString(),
 		Credentials:  cred,
+		Shared:       plan.Shared.ValueBool(),
 	}
+	plan.Tags.ElementsAs(ctx, &cloudAccountRequest.Tags, true)
 
-	tflog.Info(ctx, "req param", map[string]interface{}{"reeed": cloudAccountRequest})
+	tflog.Info(ctx, "req param", map[string]interface{}{"create-request": cloudAccountRequest})
 	cloudAccount, err := r.client.InfraConnector.CreateCloudAccount(cloudAccountRequest)
 	if err != nil {
 		apiErr := core.ApiError{}
@@ -140,7 +181,7 @@ func (r *cloudAccountResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	// Map response body to schema and populate Computed attribute values
-	if saveFromCloudAccountCreateResponse(&plan, cloudAccount) != 0 {
+	if saveFromCloudAccountCreateResponse(&ctx, &resp.Diagnostics, &plan, cloudAccount) != 0 {
 		return
 	}
 
@@ -158,26 +199,37 @@ func (r *cloudAccountResource) Update(ctx context.Context, req resource.UpdateRe
 	tflog.Info(ctx, "INIT__Update")
 
 	// Retrieve values from plan
-	var state CloudAccountResourceModel
-	diags := req.Plan.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
+	var plan, state CloudAccountResourceModel
+	diags := req.Plan.Get(ctx, &plan)
+	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
+		return
+	}
+	diags = req.State.Get(ctx, &state)
+	if resp.Diagnostics.Append(diags...); resp.Diagnostics.HasError() {
 		return
 	}
 
-	var cred infra_connector.CredentialModel
+	if msg := r.validateUpdateRequest(&state, &plan); msg != "OK" {
+		resp.Diagnostics.AddError(
+			"Invalid Update", msg,
+		)
+	}
 
-	if err := json.Unmarshal([]byte(state.Credential.ValueString()), &cred); err != nil {
+	request := infra_connector.CloudAccountUpdateRequest{}
+	plan.Tags.ElementsAs(ctx, &request.Tags, true)
+	var cred infra_connector.CredentialModel
+	if err := json.Unmarshal([]byte(plan.Credential.ValueString()), &cred); err != nil {
 		resp.Diagnostics.AddError(
 			"Error unmarshalling Credential JSON",
 			" Unexpected error: "+err.Error(),
 		)
 	} else {
 		tflog.Info(ctx, "Successfully unmarshalled Credential JSON:", map[string]interface{}{"cred": cred})
+		request.Credentials = cred
 	}
 
 	// Update existing cloud account
-	if err := r.client.InfraConnector.UpdateCloudAccount(state.ID.ValueString(), &cred); err != nil {
+	if err := r.client.InfraConnector.UpdateCloudAccount(plan.ID.ValueString(), &request); err != nil {
 		resp.Diagnostics.AddError(
 			"Updating MDS cloud account",
 			"Could not update cloud account, unexpected error: "+err.Error(),
@@ -185,7 +237,7 @@ func (r *cloudAccountResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	cloudAccount, err := r.client.InfraConnector.GetCloudAccount(state.ID.ValueString())
+	cloudAccount, err := r.client.InfraConnector.GetCloudAccount(plan.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Fetching cloud account",
 			"Could not fetch cloud account while updating, unexpected error: "+err.Error(),
@@ -193,11 +245,11 @@ func (r *cloudAccountResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	if saveFromCloudAccountCreateResponse(&state, cloudAccount) != 0 {
+	if saveFromCloudAccountCreateResponse(&ctx, &resp.Diagnostics, &plan, cloudAccount) != 0 {
 		return
 	}
 
-	diags = resp.State.Set(ctx, state)
+	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -253,7 +305,7 @@ func (r *cloudAccountResource) Read(ctx context.Context, req resource.ReadReques
 		return
 	}
 
-	if saveFromCloudAccountCreateResponse(&state, cloudAcct) != 0 {
+	if saveFromCloudAccountCreateResponse(&ctx, &resp.Diagnostics, &state, cloudAcct) != 0 {
 		return
 	}
 
@@ -267,11 +319,33 @@ func (r *cloudAccountResource) Read(ctx context.Context, req resource.ReadReques
 	tflog.Info(ctx, "END__Read")
 }
 
-func saveFromCloudAccountCreateResponse(state *CloudAccountResourceModel,
-	cloudAccountCreateResponse *model.MdsCloudAccount) int8 {
-	state.Name = types.StringValue(cloudAccountCreateResponse.Name)
-	state.UserEmail = types.StringValue(cloudAccountCreateResponse.Email)
-	state.ID = types.StringValue(cloudAccountCreateResponse.Id)
-	state.ProviderType = types.StringValue(cloudAccountCreateResponse.AccountType)
+func (r *cloudAccountResource) validateUpdateRequest(state *CloudAccountResourceModel, plan *CloudAccountResourceModel) string {
+	if state.ProviderType != plan.ProviderType {
+		return `Updating "provider_type" is not allowed`
+	}
+	if state.Shared != plan.Shared {
+		return `Updating "shared" is not allowed`
+	}
+	if state.OrgId != plan.OrgId {
+		return `Updating "org_id" is not allowed`
+	}
+	return "OK"
+}
+
+func saveFromCloudAccountCreateResponse(ctx *context.Context, diagnostics *diag.Diagnostics, state *CloudAccountResourceModel,
+	response *model.MdsCloudAccount) int8 {
+	state.ID = types.StringValue(response.Id)
+	state.Name = types.StringValue(response.Name)
+	state.UserEmail = types.StringValue(response.Email)
+	state.ProviderType = types.StringValue(response.AccountType)
+	state.OrgId = types.StringValue(response.OrgId)
+	state.Shared = types.BoolValue(response.Shared)
+	state.DataPlaneCount = types.Int64Value(response.DataPlaneCount)
+	state.CreatedBy = types.StringValue(response.CreatedBy)
+	list, diags := types.SetValueFrom(*ctx, types.StringType, response.Tags)
+	if diagnostics.Append(diags...); diagnostics.HasError() {
+		return 1
+	}
+	state.Tags = list
 	return 0
 }
