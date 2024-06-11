@@ -302,6 +302,7 @@ func (p *mdsProvider) DataSources(_ context.Context) []func() datasource.DataSou
 		NewCloudProviderRegionsDataSource,
 		NewTshirtSizeDatasource,
 		NewCertificatesDatasource,
+		NewObjectStorageDatasource,
 	}
 }
 
@@ -317,6 +318,7 @@ func (p *mdsProvider) Resources(_ context.Context) []func() resource.Resource {
 		NewByocDataPlaneResourceResource,
 		NewCloudAccountResource,
 		NewCertificateResource,
+		NewObjectStorageResource,
 	}
 }
 

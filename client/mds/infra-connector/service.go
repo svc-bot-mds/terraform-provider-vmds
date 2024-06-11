@@ -287,3 +287,76 @@ func (s *Service) DeleteCertificate(id string) error {
 
 	return err
 }
+
+func (s *Service) GetObjectStorages(query *ObjectStorageQuery) (model.Paged[model.MdsObjectStorage], error) {
+	var response model.Paged[model.MdsObjectStorage]
+	if query == nil {
+		return response, fmt.Errorf("query cannot be nil")
+	}
+
+	reqUrl := fmt.Sprintf("%s/%s", s.Endpoint, ObjectStore)
+
+	if query.Size == 0 {
+		query.Size = defaultPage.Size
+	}
+
+	_, err := s.Api.Get(&reqUrl, query, &response)
+	if err != nil {
+		return response, err
+	}
+	return response, nil
+}
+
+func (s *Service) GetObjectStorage(id string) (model.MdsObjectStorage, error) {
+	var response model.MdsObjectStorage
+
+	reqUrl := fmt.Sprintf("%s/%s/%s", s.Endpoint, ObjectStore, id)
+
+	_, err := s.Api.Get(&reqUrl, nil, &response)
+	if err != nil {
+		return response, err
+	}
+	return response, err
+}
+
+func (s *Service) CreateObjectStorage(requestBody *ObjectStorageCreateRequest) (*model.MdsObjectStorage, error) {
+	if requestBody == nil {
+		return nil, fmt.Errorf("requestBody cannot be nil")
+	}
+	var response model.MdsObjectStorage
+	urlPath := fmt.Sprintf("%s/%s", s.Endpoint, ObjectStore)
+
+	_, err := s.Api.Post(&urlPath, requestBody, &response)
+	if err != nil {
+		return &response, err
+	}
+
+	return &response, err
+}
+
+func (s *Service) UpdateObjectStore(id string, requestBody *ObjectStorageUpdateRequest) (*model.MdsObjectStorage, error) {
+	if requestBody == nil {
+		return nil, fmt.Errorf("requestBody cannot be nil")
+	}
+	var response model.MdsObjectStorage
+	urlPath := fmt.Sprintf("%s	/%s/%s", s.Endpoint, ObjectStore, id)
+
+	_, err := s.Api.Post(&urlPath, requestBody, &response)
+	if err != nil {
+		return &response, err
+	}
+
+	return &response, err
+}
+
+// DeleteObjectStorage - Submits a request to delete object storage
+func (s *Service) DeleteObjectStorage(id string) error {
+	urlPath := fmt.Sprintf("%s/%s/%s", s.Endpoint, ObjectStore, id)
+
+	_, err := s.Api.Delete(&urlPath, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return err
+}

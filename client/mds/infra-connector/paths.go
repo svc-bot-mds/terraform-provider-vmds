@@ -9,4 +9,5 @@ const (
 	TshirtSize     = "t-shirt-size"
 	Certificate    = "certificate"
 	Internal       = "internal"
+	ObjectStore    = "objectstore"
 )
